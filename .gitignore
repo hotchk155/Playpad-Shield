@@ -30,7 +30,7 @@
 *.GTO
 *.GTP
 *.GTS
-*.TXT
+hardware\*.TXT
 
 
 
@@ -45,3 +45,7 @@ Thumbs.db
 Desktop.ini
 
 
+#FTDI
+
+Debug\*.*
+*.bak
