@@ -66,30 +66,24 @@ void RunMIDIInput();
 //////////////////////////////////////////////////////////////////////
 void iomux_setup()
 {
-	// Debugger to pin 11 as Bi-Directional.
-	vos_iomux_define_bidi(199, IOMUX_IN_DEBUGGER, IOMUX_OUT_DEBUGGER);
-	// GPIO_Port_A_1 to pin 12 as Output.
-	vos_iomux_define_output(12, IOMUX_OUT_GPIO_PORT_A_1);
-	// GPIO_Port_A_2 to pin 14 as Output.
-	vos_iomux_define_output(14, IOMUX_OUT_GPIO_PORT_A_2);
-	// GPIO_Port_A_3 to pin 15 as Output.
-	vos_iomux_define_output(15, IOMUX_OUT_GPIO_PORT_A_3);
-	// UART_TXD to pin 23 as Output.
-	vos_iomux_define_output(23, IOMUX_OUT_UART_TXD);
-	// UART_RXD to pin 24 as Input.
-	vos_iomux_define_input(24, IOMUX_IN_UART_RXD);
-	// UART_RTS_N to pin 25 as Output.
-	vos_iomux_define_output(25, IOMUX_OUT_UART_RTS_N);
-	// UART_CTS_N to pin 26 as Input.
-	vos_iomux_define_input(26, IOMUX_IN_SPI_SLAVE_0_CS);
-	// SPI_Slave_0_CLK to pin 29 as Input.
-	vos_iomux_define_input(29, IOMUX_IN_SPI_SLAVE_0_CLK);
-	// SPI_Slave_0_MOSI to pin 30 as Input.
-	vos_iomux_define_input(30, IOMUX_IN_SPI_SLAVE_0_MOSI);
-	// SPI_Slave_0_MISO to pin 31 as Output.
-	vos_iomux_define_output(31, IOMUX_OUT_SPI_SLAVE_0_MISO);
-	// GPIO_Port_A_1 to pin 32 as Output.
-	//vos_iomux_define_output(32, IOMUX_OUT_GPIO_PORT_A_3);
+	vos_iomux_define_bidi( 199, 	IOMUX_IN_DEBUGGER, IOMUX_OUT_DEBUGGER);
+	
+	// GPIOS
+	vos_iomux_define_output(12, 	IOMUX_OUT_GPIO_PORT_A_1);
+	vos_iomux_define_output(14, 	IOMUX_OUT_GPIO_PORT_A_2);
+	vos_iomux_define_input(	15, 	IOMUX_IN_GPIO_PORT_A_3);
+	vos_iomux_define_output(25, 	IOMUX_OUT_GPIO_PORT_A_6);
+	vos_iomux_define_output(26, 	IOMUX_OUT_GPIO_PORT_A_7);
+	
+	// UART
+	vos_iomux_define_output(23, 	IOMUX_OUT_UART_TXD);
+	vos_iomux_define_input(	24, 	IOMUX_IN_UART_RXD);
+	
+	// SPI SLAVE 0
+	vos_iomux_define_input(	29, 	IOMUX_IN_SPI_SLAVE_0_CLK);
+	vos_iomux_define_input(	30, 	IOMUX_IN_SPI_SLAVE_0_MOSI);
+	vos_iomux_define_output(31, 	IOMUX_OUT_SPI_SLAVE_0_MISO);
+	vos_iomux_define_input(	32, 	IOMUX_IN_SPI_SLAVE_0_CS);
 }
 
 
@@ -117,8 +111,8 @@ void main(void)
 
 	// Initialise GPIO port A
 	gpioCtx.port_identifier = GPIO_PORT_A;
-	gpio_init(VOS_DEV_GPIO_A,&gpioCtx); //
-
+	gpio_init(VOS_DEV_GPIO_A,&gpioCtx); 
+	
 	// Initialise UART
 	uartContext.buffer_size = VOS_BUFFER_SIZE_128_BYTES;
 	uart_init(VOS_DEV_UART, &uartContext);
@@ -146,16 +140,16 @@ void main(void)
 	//PortB.uchActivityLed = 0b00000100;
 
 	// setup the event queue
-	SMQInit();
+	//SMQInit();
 
 	// Initializes our device with the device manager.
 	
 	tcbSetup = vos_create_thread_ex(10, 1024, Setup, "Setup", 0);
-	tcbHostA = vos_create_thread_ex(20, 1024, RunHostPort, "RunHostPortA", sizeof(HOST_PORT_DATA*), &PortA);
+	//tcbHostA = vos_create_thread_ex(20, 1024, RunHostPort, "RunHostPortA", sizeof(HOST_PORT_DATA*), &PortA);
 	//tcbHostB = vos_create_thread_ex(20, 1024, RunHostPort, "RunHostPortB", sizeof(HOST_PORT_DATA*), &PortB);
 	tcbPlaypad = vos_create_thread_ex(15, 1024, RunPlaypad, "RunPlaypad", 0);
-	tcbMetro = vos_create_thread_ex(15, 1024, RunMetronome, "RunMetronome", 0);
-	tcbMIDIInput = vos_create_thread_ex(15, 1024, RunMIDIInput, "RunMIDIInput", 0);
+	//tcbMetro = vos_create_thread_ex(15, 1024, RunMetronome, "RunMetronome", 0);
+	//tcbMIDIInput = vos_create_thread_ex(15, 1024, RunMIDIInput, "RunMIDIInput", 0);
 
 	vos_init_semaphore(&setupSem,0);
 	
@@ -186,10 +180,10 @@ void Setup()
 	//PortB.hUSBHOST = vos_dev_open(VOS_DEV_USBHOST_2);
 
 	gpio_iocb.ioctl_code = VOS_IOCTL_GPIO_SET_MASK;
-	gpio_iocb.value = 0b00001110;
+	gpio_iocb.value = 0b11000110;
 	vos_dev_ioctl(hGpioA, &gpio_iocb);
-	uchLeds = 0b00001000;
-	vos_dev_write(hGpioA,&uchLeds,1,NULL);
+	//uchLeds = 0b00001000;
+	//vos_dev_write(hGpioA,&uchLeds,1,NULL);
 
 	hUART = vos_dev_open(VOS_DEV_UART);
 
@@ -207,7 +201,7 @@ void Setup()
 	vos_dev_ioctl(hUART, &uart_iocb);
 
 	// Set up the metronome
-	MetroInit(&metro, VOS_DEV_TIMER0, TIMER_0);
+	//MetroInit(&metro, VOS_DEV_TIMER0, TIMER_0);
 	
 	// Release other application threads
 	vos_signal_semaphore(&setupSem);
@@ -227,6 +221,17 @@ void setLed(unsigned char mask, unsigned char value)
 	else
 		leds &= ~mask;
 	vos_dev_write(hGpioA,&leds,1,NULL);
+}
+//////////////////////////////////////////////////////////////////////
+//
+// GET GPIO
+//
+//////////////////////////////////////////////////////////////////////
+byte getGPIO()
+{
+	unsigned char gpio;
+	vos_dev_read(hGpioA,&gpio,1,NULL);
+	return gpio;
 }
 	
 //////////////////////////////////////////////////////////////////////
@@ -498,7 +503,9 @@ void RunPlaypad()
 	
 	for(;;)
 	{
-		SMQRead(&msg);
+			setLed(255,!!(getGPIO()&8));
+		/*
+		//SMQRead(&msg);
 		switch(msg.status)
 		{
 			case 0x80:
@@ -516,6 +523,7 @@ void RunPlaypad()
 				//arpie_event(EVENT_TICK, 0, 0);
 				break;
 		}
+	*/
 	}
 }
 

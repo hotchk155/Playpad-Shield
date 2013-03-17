@@ -62,7 +62,7 @@
 			<AdditionalOpts></AdditionalOpts>
 		</LinkerOptions>
 	</ReleaseMode>
-	<BuildMode>Debug</BuildMode>
+	<BuildMode>Release</BuildMode>
 	<VirtualFolderGroup>
 		<Name>FTDI Libraries</Name>
 		<ID>{00000000-0000-0000-0000-000000000001}</ID>
@@ -528,11 +528,6 @@
 	</VirtualFolderGroup>
 	<VirtualFolderGroup>
 		<Name>Drivers</Name>
-		<ID>{00000000-0000-0000-0000-000000000005}</ID>
-		<ParentID>{00000000-0000-0000-0000-000000000002}</ParentID>
-	</VirtualFolderGroup>
-	<VirtualFolderGroup>
-		<Name>Drivers</Name>
 		<ID>{00000000-0000-0000-0000-000000000008}</ID>
 		<ParentID>{00000000-0000-0000-0000-000000000003}</ParentID>
 	</VirtualFolderGroup>
@@ -548,11 +543,6 @@
 	</VirtualFolderGroup>
 	<VirtualFolderGroup>
 		<Name>Drivers</Name>
-		<ID>{00000000-0000-0000-0000-000000000008}</ID>
-		<ParentID>{00000000-0000-0000-0000-000000000003}</ParentID>
-	</VirtualFolderGroup>
-	<VirtualFolderGroup>
-		<Name>Drivers</Name>
 		<ID>{00000000-0000-0000-0000-000000000005}</ID>
 		<ParentID>{00000000-0000-0000-0000-000000000002}</ParentID>
 	</VirtualFolderGroup>
@@ -584,11 +574,6 @@
 	<VirtualFolderGroup>
 		<Name>Drivers</Name>
 		<ID>{00000000-0000-0000-0000-000000000005}</ID>
-		<ParentID>{00000000-0000-0000-0000-000000000002}</ParentID>
-	</VirtualFolderGroup>
-	<VirtualFolderGroup>
-		<Name>Runtime</Name>
-		<ID>{00000000-0000-0000-0000-000000000006}</ID>
 		<ParentID>{00000000-0000-0000-0000-000000000002}</ParentID>
 	</VirtualFolderGroup>
 	<VirtualFolderGroup>
@@ -971,6 +956,35 @@
 	<BuildList>
 		<filename>Metronome.h</filename>
 	</BuildList>
+	<Files>
+		<filename>Playpad.h</filename>
+		<fileDir></fileDir>
+		<fileType>4</fileType>
+		<isFileDirty>false</isFileDirty>
+		<VirtualFolder></VirtualFolder>
+	</Files>
+	<BuildList>
+		<filename>Playpad.h</filename>
+	</BuildList>
+	<LibraryFiles>
+		<fileDir></fileDir>
+		<filename>string.h</filename>
+		<fileType>4</fileType>
+		<isFileDirty>false</isFileDirty>
+		<VirtualFolder>{00000000-0000-0000-0000-000000000006}</VirtualFolder>
+	</LibraryFiles>
+	<VirtualFolderGroup>
+		<Name>Include</Name>
+		<ID>{00000000-0000-0000-0000-000000000002}</ID>
+		<ParentID>{00000000-0000-0000-0000-000000000001}</ParentID>
+	</VirtualFolderGroup>
+	<LibraryFiles>
+		<fileDir></fileDir>
+		<filename>errno.h</filename>
+		<fileType>4</fileType>
+		<isFileDirty>false</isFileDirty>
+		<VirtualFolder>{00000000-0000-0000-0000-000000000006}</VirtualFolder>
+	</LibraryFiles>
 	<LibraryFiles>
 		<fileDir></fileDir>
 		<filename>vos.h</filename>
@@ -978,11 +992,6 @@
 		<isFileDirty>false</isFileDirty>
 		<VirtualFolder>{00000000-0000-0000-0000-000000000004}</VirtualFolder>
 	</LibraryFiles>
-	<VirtualFolderGroup>
-		<Name>Include</Name>
-		<ID>{00000000-0000-0000-0000-000000000002}</ID>
-		<ParentID>{00000000-0000-0000-0000-000000000001}</ParentID>
-	</VirtualFolderGroup>
 	<VirtualFolderGroup>
 		<Name>Kernel</Name>
 		<ID>{00000000-0000-0000-0000-000000000004}</ID>
@@ -1025,18 +1034,41 @@
 	</LibraryFiles>
 	<LibraryFiles>
 		<fileDir></fileDir>
-		<filename>string.h</filename>
+		<filename>SPISlave.h</filename>
 		<fileType>4</fileType>
 		<isFileDirty>false</isFileDirty>
-		<VirtualFolder>{00000000-0000-0000-0000-000000000006}</VirtualFolder>
+		<VirtualFolder>{00000000-0000-0000-0000-000000000005}</VirtualFolder>
 	</LibraryFiles>
 	<LibraryFiles>
 		<fileDir></fileDir>
-		<filename>errno.h</filename>
-		<fileType>4</fileType>
+		<filename>string.a</filename>
+		<fileType>3</fileType>
 		<isFileDirty>false</isFileDirty>
-		<VirtualFolder>{00000000-0000-0000-0000-000000000006}</VirtualFolder>
+		<VirtualFolder>{00000000-0000-0000-0000-000000000009}</VirtualFolder>
 	</LibraryFiles>
+	<VirtualFolderGroup>
+		<Name>Libraries</Name>
+		<ID>{00000000-0000-0000-0000-000000000003}</ID>
+		<ParentID>{00000000-0000-0000-0000-000000000001}</ParentID>
+	</VirtualFolderGroup>
+	<VirtualFolderGroup>
+		<Name>Runtime</Name>
+		<ID>{00000000-0000-0000-0000-000000000009}</ID>
+		<ParentID>{00000000-0000-0000-0000-000000000003}</ParentID>
+	</VirtualFolderGroup>
+	<BuildList>
+		<filename>string.a</filename>
+	</BuildList>
+	<LibraryFiles>
+		<fileDir></fileDir>
+		<filename>stdlib.a</filename>
+		<fileType>3</fileType>
+		<isFileDirty>false</isFileDirty>
+		<VirtualFolder>{00000000-0000-0000-0000-000000000009}</VirtualFolder>
+	</LibraryFiles>
+	<BuildList>
+		<filename>stdlib.a</filename>
+	</BuildList>
 	<LibraryFiles>
 		<fileDir></fileDir>
 		<filename>kernel.a</filename>
@@ -1044,11 +1076,6 @@
 		<isFileDirty>false</isFileDirty>
 		<VirtualFolder>{00000000-0000-0000-0000-000000000007}</VirtualFolder>
 	</LibraryFiles>
-	<VirtualFolderGroup>
-		<Name>Libraries</Name>
-		<ID>{00000000-0000-0000-0000-000000000003}</ID>
-		<ParentID>{00000000-0000-0000-0000-000000000001}</ParentID>
-	</VirtualFolderGroup>
 	<VirtualFolderGroup>
 		<Name>Kernel</Name>
 		<ID>{00000000-0000-0000-0000-000000000007}</ID>
@@ -1096,40 +1123,9 @@
 	</LibraryFiles>
 	<BuildList>
 		<filename>Timers.a</filename>
-	</BuildList>
-	<LibraryFiles>
-		<fileDir></fileDir>
-		<filename>string.a</filename>
-		<fileType>3</fileType>
-		<isFileDirty>false</isFileDirty>
-		<VirtualFolder>{00000000-0000-0000-0000-000000000009}</VirtualFolder>
-	</LibraryFiles>
-	<VirtualFolderGroup>
-		<Name>Runtime</Name>
-		<ID>{00000000-0000-0000-0000-000000000009}</ID>
-		<ParentID>{00000000-0000-0000-0000-000000000003}</ParentID>
-	</VirtualFolderGroup>
-	<BuildList>
-		<filename>string.a</filename>
-	</BuildList>
-	<LibraryFiles>
-		<fileDir></fileDir>
-		<filename>stdlib.a</filename>
-		<fileType>3</fileType>
-		<isFileDirty>false</isFileDirty>
-		<VirtualFolder>{00000000-0000-0000-0000-000000000009}</VirtualFolder>
-	</LibraryFiles>
-	<BuildList>
-		<filename>stdlib.a</filename>
-	</BuildList>
-	<Files>
-		<filename>Playpad.h</filename>
-		<fileDir></fileDir>
-		<fileType>4</fileType>
-		<isFileDirty>false</isFileDirty>
-		<VirtualFolder></VirtualFolder>
-	</Files>
-	<BuildList>
-		<filename>Playpad.h</filename>
-	</BuildList>
+	</BuildList>	
+	<OpenFilesList>
+		<filename>Playpad.c</filename>
+		<actvieTabIndex>0</actvieTabIndex>
+	</OpenFilesList>
 </Project>
