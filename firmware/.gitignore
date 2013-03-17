@@ -12,5 +12,9 @@ Desktop.ini
 
 #FTDI
 
-Debug\
+*.asm
+*.obj
+*.bin
+*.rom
 *.bak
+*.map
