@@ -1,7 +1,5 @@
 //////////////////////////////////////////////////////////////////////
-//
-// DUAL USB HOST FOR NOVATION LAUNCHPAD <-> MIDI TRANSFER
-//
+// DUAL USB HOST FOR NOVATION LAUNCHPAD 
 //////////////////////////////////////////////////////////////////////
 
 //
@@ -9,9 +7,6 @@
 //
 #include "Playpad.h"
 #include "USBHostGenericDrv.h"
-#include "Metronome.h"
-#include "SynchMIDIQueue.h"
-#include "Playpad.h"
 
 
 //
@@ -20,43 +15,45 @@
 typedef struct {
 	VOS_HANDLE hUSBHOST;
 	VOS_HANDLE hUSBHOSTGENERIC;
+	unsigned char uchDeviceNumberBase;
 	unsigned char uchDeviceNumber;
-	unsigned char uchMidiChannel;
 	unsigned char uchActivityLed;
-	unsigned char uchAttached;
+	unsigned char uchChannel;
 } HOST_PORT_DATA;
-
-
+	
 //
 // VARIABLE DECL
 //
 vos_tcb_t *tcbSetup;
 vos_tcb_t *tcbHostA;
 vos_tcb_t *tcbHostB;
-vos_tcb_t *tcbPlaypad;
-vos_tcb_t *tcbMetro;
-vos_tcb_t *tcbMIDIInput;
+vos_tcb_t *tcbSPISlave;
 
 vos_semaphore_t setupSem;
 
 VOS_HANDLE hGpioA;
-VOS_HANDLE hUART;
+VOS_HANDLE hSPISlave;
+
+unsigned char buf[512];
+unsigned short pBuf = 0;
 
 
 HOST_PORT_DATA PortA = {0};
 HOST_PORT_DATA PortB = {0};
-	
-METRONOME metro;
+uint8 gpioAOutput = 0;
+
+#define LED_SIGNAL 0x40	
+#define LED_ACTIVITY 0x80
+#define LED_USB_B 0x02
+#define LED_USB_A 0x04
+
 	
 //
 // FUNCTION PROTOTYPES
 //
 void Setup();
 void RunHostPort(HOST_PORT_DATA *pHostData);
-void RunMetronome();
-void RunPlaypad();
-void RunMIDIInput();
-
+void RunSPISlave();
 
 //////////////////////////////////////////////////////////////////////
 //
@@ -86,7 +83,15 @@ void iomux_setup()
 	vos_iomux_define_input(	32, 	IOMUX_IN_SPI_SLAVE_0_CS);
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
+// SET GPIO A
+////////////////////////////////////////////////////////////////////////////////
+void setGpioA(uint8 mask, uint8 data)
+{
+	gpioAOutput &= ~mask;
+	gpioAOutput |= data;
+	vos_dev_write(hGpioA,&gpioAOutput,1,NULL);
+}
 //////////////////////////////////////////////////////////////////////
 //
 // MAIN
@@ -94,12 +99,9 @@ void iomux_setup()
 //////////////////////////////////////////////////////////////////////
 void main(void)
 {
-	/* FTDI:SDD Driver Declarations */
-	// UART Driver configuration context
-	uart_context_t uartContext;
-	// USB Host configuration context
 	usbhost_context_t usbhostContext;
 	gpio_context_t gpioCtx;
+	//spislave_context_t spiSlaveContext;
 
 	// Kernel initialisation
 	vos_init(50, VOS_TICK_INTERVAL, VOS_NUMBER_DEVICES);
@@ -109,47 +111,43 @@ void main(void)
 	// Set up the io multiplexing
 	iomux_setup();
 
+	//spiSlaveContext.slavenumber = SPI_SLAVE_0;
+	//spiSlaveContext.buffer_size = 64;
+	//spislave_init(VOS_DEV_SPISLAVE, &spiSlaveContext);
+	
 	// Initialise GPIO port A
 	gpioCtx.port_identifier = GPIO_PORT_A;
 	gpio_init(VOS_DEV_GPIO_A,&gpioCtx); 
 	
-	// Initialise UART
-	uartContext.buffer_size = VOS_BUFFER_SIZE_128_BYTES;
-	uart_init(VOS_DEV_UART, &uartContext);
-	
-
 	// Initialise USB Host devices
 	usbhostContext.if_count = 8;
 	usbhostContext.ep_count = 16;
 	usbhostContext.xfer_count = 2;
 	usbhostContext.iso_xfer_count = 2;
-	//usbhost_init(VOS_DEV_USBHOST_1, VOS_DEV_USBHOST_2, &usbhostContext);
-	usbhost_init(VOS_DEV_USBHOST_1, -1, &usbhostContext);
+	usbhost_init(VOS_DEV_USBHOST_1, VOS_DEV_USBHOST_2, &usbhostContext);
+	
 
 	// Initialise the USB function device
 	usbhostGeneric_init(VOS_DEV_USBHOSTGENERIC_1);
-	//usbhostGeneric_init(VOS_DEV_USBHOSTGENERIC_2);
+	usbhostGeneric_init(VOS_DEV_USBHOSTGENERIC_2);
 
-
+	PortA.uchActivityLed = LED_USB_A;
+	PortA.uchChannel = 0;
+	PortA.uchDeviceNumberBase = VOS_DEV_USBHOST_1;
 	PortA.uchDeviceNumber = VOS_DEV_USBHOSTGENERIC_1;
-	PortA.uchMidiChannel = 0;
-	PortA.uchActivityLed = 0b00000010;
-
-	//PortB.uchDeviceNumber = VOS_DEV_USBHOSTGENERIC_2;
-	//PortB.uchMidiChannel = 1;
-	//PortB.uchActivityLed = 0b00000100;
-
-	// setup the event queue
-	//SMQInit();
-
+	
+	PortB.uchActivityLed = LED_USB_B;
+	PortB.uchChannel = 1;
+	PortB.uchDeviceNumberBase = VOS_DEV_USBHOST_2;
+	PortB.uchDeviceNumber = VOS_DEV_USBHOSTGENERIC_2;
+	
+	
 	// Initializes our device with the device manager.
 	
 	tcbSetup = vos_create_thread_ex(10, 1024, Setup, "Setup", 0);
-	//tcbHostA = vos_create_thread_ex(20, 1024, RunHostPort, "RunHostPortA", sizeof(HOST_PORT_DATA*), &PortA);
-	//tcbHostB = vos_create_thread_ex(20, 1024, RunHostPort, "RunHostPortB", sizeof(HOST_PORT_DATA*), &PortB);
-	tcbPlaypad = vos_create_thread_ex(15, 1024, RunPlaypad, "RunPlaypad", 0);
-	//tcbMetro = vos_create_thread_ex(15, 1024, RunMetronome, "RunMetronome", 0);
-	//tcbMIDIInput = vos_create_thread_ex(15, 1024, RunMIDIInput, "RunMIDIInput", 0);
+	tcbHostA = vos_create_thread_ex(20, 1024, RunHostPort, "RunHostPortA", sizeof(HOST_PORT_DATA*), &PortA);
+	tcbHostB = vos_create_thread_ex(20, 1024, RunHostPort, "RunHostPortB", sizeof(HOST_PORT_DATA*), &PortB);
+//	tcbSPISlave = vos_create_thread_ex(15, 1024, RunSPISlave, "RunSPISlave", 0);
 
 	vos_init_semaphore(&setupSem,0);
 	
@@ -159,8 +157,7 @@ void main(void)
 main_loop:
 	goto main_loop;
 }
-
-
+	
 //////////////////////////////////////////////////////////////////////
 //
 // APPLICATION SETUP THREAD FUNCTION
@@ -173,55 +170,45 @@ void Setup()
 	gpio_ioctl_cb_t gpio_iocb;
 	common_ioctl_cb_t uart_iocb;
 	unsigned char uchLeds;
+	common_ioctl_cb_t ss_iocb;
 
+	//hSPISlave = vos_dev_open(VOS_DEV_SPISLAVE);
+	
 	// Open up the base level drivers
 	hGpioA  	= vos_dev_open(VOS_DEV_GPIO_A);
-	PortA.hUSBHOST = vos_dev_open(VOS_DEV_USBHOST_1);
-	//PortB.hUSBHOST = vos_dev_open(VOS_DEV_USBHOST_2);
+	
 
 	gpio_iocb.ioctl_code = VOS_IOCTL_GPIO_SET_MASK;
 	gpio_iocb.value = 0b11000110;
 	vos_dev_ioctl(hGpioA, &gpio_iocb);
-	//uchLeds = 0b00001000;
-	//vos_dev_write(hGpioA,&uchLeds,1,NULL);
+	setGpioA(0b11000110,0);
+/*
+	ss_iocb.ioctl_code = VOS_IOCTL_SPI_SLAVE_SCK_CPHA;
+	ss_iocb.set.param = SPI_SLAVE_SCK_CPHA_0;
+	vos_dev_ioctl(hSPISlave, &ss_iocb);
 
-	hUART = vos_dev_open(VOS_DEV_UART);
-
-	/* UART ioctl call to enable DMA and link to DMA driver */
-	uart_iocb.ioctl_code = VOS_IOCTL_COMMON_ENABLE_DMA;
-	vos_dev_ioctl(hUART, &uart_iocb);
-
-	// Set up for MIDI
-    uart_iocb.ioctl_code = VOS_IOCTL_UART_SET_BAUD_RATE;
-	uart_iocb.set.uart_baud_rate = 31250;
-	vos_dev_ioctl(hUART, &uart_iocb);
-
-    uart_iocb.ioctl_code = VOS_IOCTL_UART_SET_FLOW_CONTROL;
-	uart_iocb.set.param = UART_FLOW_NONE;
-	vos_dev_ioctl(hUART, &uart_iocb);
-
-	// Set up the metronome
-	//MetroInit(&metro, VOS_DEV_TIMER0, TIMER_0);
+	ss_iocb.ioctl_code = VOS_IOCTL_SPI_SLAVE_SCK_CPOL;
+	ss_iocb.set.param = SPI_SLAVE_SCK_CPOL_0;
+	vos_dev_ioctl(hSPISlave, &ss_iocb);
 	
+	ss_iocb.ioctl_code = VOS_IOCTL_SPI_SLAVE_DATA_ORDER;
+	ss_iocb.set.param = SPI_SLAVE_DATA_ORDER_MSB;
+	vos_dev_ioctl(hSPISlave, &ss_iocb);
+	
+	ss_iocb.ioctl_code = VOS_IOCTL_SPI_SLAVE_SET_MODE;
+	ss_iocb.set.param = SPI_SLAVE_MODE_UNMANAGED;
+	vos_dev_ioctl(hSPISlave, &ss_iocb);
+
+
+	ss_iocb.ioctl_code = VOS_IOCTL_COMMON_ENABLE_DMA;
+	ss_iocb.set.param = DMA_ACQUIRE_AS_REQUIRED;
+	vos_dev_ioctl(hSPISlave, &ss_iocb);
+
+	*/
 	// Release other application threads
 	vos_signal_semaphore(&setupSem);
 }
 
-//////////////////////////////////////////////////////////////////////
-//
-// SET LED
-//
-//////////////////////////////////////////////////////////////////////
-void setLed(unsigned char mask, unsigned char value)
-{
-	unsigned char leds;
-	vos_dev_read(hGpioA,&leds,1,NULL);
-	if(value)
-		leds |= mask;
-	else
-		leds &= ~mask;
-	vos_dev_write(hGpioA,&leds,1,NULL);
-}
 //////////////////////////////////////////////////////////////////////
 //
 // GET GPIO
@@ -255,17 +242,17 @@ unsigned char usbhost_connect_state(VOS_HANDLE hUSB)
 }
 
 
-
 //////////////////////////////////////////////////////////////////////
 //
-// THREAD FUNCTION TO RUN USB HOST PORT
+// RUN USB HOST PORT
 //
 //////////////////////////////////////////////////////////////////////
 void RunHostPort(HOST_PORT_DATA *pHostData)
 {
 	unsigned char status;
-	unsigned char buf[64];
-	unsigned short num_read;
+	unsigned char buf[64];	
+	unsigned char msg[4];
+	unsigned short num_bytes;
 	unsigned int handle;
 	usbhostGeneric_ioctl_t generic_iocb;
 	usbhostGeneric_ioctl_cb_attach_t genericAtt;
@@ -274,13 +261,13 @@ void RunHostPort(HOST_PORT_DATA *pHostData)
 	usbhost_ioctl_cb_vid_pid_t hc_iocb_vid_pid;
 	gpio_ioctl_cb_t gpio_iocb;
 
-	SMQ_MSG msg;
-	msg.status = 0x90;
-
 	// wait for setup to complete
 	vos_wait_semaphore(&setupSem);
 	vos_signal_semaphore(&setupSem);
 
+	pHostData->hUSBHOST = vos_dev_open(pHostData->uchDeviceNumberBase);
+
+	
 	// loop forever
 	while(1)
 	{
@@ -307,7 +294,8 @@ void RunHostPort(HOST_PORT_DATA *pHostData)
 				generic_iocb.set.att = &genericAtt;
 				if (vos_dev_ioctl(pHostData->hUSBHOSTGENERIC, &generic_iocb) == USBHOSTGENERIC_OK)
 				{
-					setLed(pHostData->uchActivityLed, 1);
+					// Turn on the LED for this port
+					setGpioA(pHostData->uchActivityLed, pHostData->uchActivityLed);
 					
 					// now we loop until the launchpad is detached
 					while(1)
@@ -315,215 +303,134 @@ void RunHostPort(HOST_PORT_DATA *pHostData)
 						int pos = 0;
 						byte param = 1;
 						
-						// read data
-						status = vos_dev_read(pHostData->hUSBHOSTGENERIC, buf, 64, &num_read);
+						// receiving data from the launchpad
+						status = vos_dev_read(pHostData->hUSBHOSTGENERIC, buf, 64, &num_bytes);
 						if(status != USBHOSTGENERIC_OK)
 							break;
-							
-						setLed(pHostData->uchActivityLed, 0);
+						vos_dev_write(pHostData->hUSBHOSTGENERIC, buf, num_bytes, &num_bytes);
+						
+/*							
+						setGpioA(pHostData->uchActivityLed, 0);
+						setGpioA(LED_SIGNAL,LED_SIGNAL);
 
-						// interpret MIDI data and pass to application thread
-						
-						while(pos < num_read)
+						// prepare to pass the data to SPI slave
+						msg[0] = pHostData->uchChannel;
+						if(buf[0]&0x80)
 						{
-							if(buf[pos] & 0x80)
-							{
-								msg.status = buf[pos];
-								param = 1;
-							}
-							else if(param == 1)
-							{
-								msg.param1 = buf[pos];
-								param = 2;
-							}
-							else if(param == 2)
-							{
-								msg.param2 = buf[pos];
-								SMQWrite(&msg);										
-								param = 1;
-							}
-							++pos;
+							msg[1] = buf[0];
+							msg[2] = buf[1];
+							msg[3] = buf[2];
 						}
+						else
+						{
+							msg[1] = 0;
+							msg[2] = buf[0];
+							msg[3] = buf[1];
+						}							
+						status = vos_dev_write(hSPISlave, msg, 4, &num_bytes);		
+						setGpioA(LED_SIGNAL,0);
 						
-						setLed(pHostData->uchActivityLed, 1);
+						setGpioA(pHostData->uchActivityLed, pHostData->uchActivityLed);
+*/						
 					}					
+					// Turn off the LED
+					setGpioA(pHostData->uchActivityLed, 0);
 				}
 				vos_dev_close(pHostData->hUSBHOSTGENERIC);
 			}
 		}
-		setLed(pHostData->uchActivityLed, 0);
 	}
 }	
 
-//////////////////////////////////////////////////////////////////////
-//
-// THREAD FUNCTION TO RUN MIDI INPUT
-//
-//////////////////////////////////////////////////////////////////////
-void RunMIDIInput()
+/*	
+void SPISlave()
 {
-	SMQ_MSG msg;
-	unsigned short num_read;
-	byte uch;
+	unsigned short numRead;
+	common_ioctl_cb_t spi_iocb;
+	unsigned short dataAvail = 0;
+	unsigned char testdata;
+
+	vos_wait_semaphore(&setupSem);
+
+	while(1)
+	{
+		// get bytes available...
+		spi_iocb.ioctl_code = VOS_IOCTL_COMMON_GET_RX_QUEUE_STATUS;
+		vos_dev_ioctl(hSPI_SLAVE_1, &spi_iocb);
+		dataAvail = spi_iocb.get.queue_stat; // How much data to read?
+
+		if (dataAvail)
+		{
+			if (dataAvail > (sizeof(buf) - pBuf))
+				dataAvail = (sizeof(buf) - pBuf);
+
+			vos_lock_mutex(&mBufAccess);
+			vos_dev_read(hSPI_SLAVE_1, &buf[pBuf], dataAvail, &numRead);
+			pBuf += numRead;
+			vos_unlock_mutex(&mBufAccess);
+			vos_signal_semaphore(&dataSem);
+		}
+	}
+}
+*/
 	
+////////////////////////////////////////////////////////////////////
+//	
+// THREAD TO RUN THE SPI INTERFACE
+//
+////////////////////////////////////////////////////////////////////
+void RunSPISlave()
+{
+	uint8 buf[4];
+	uint16 num_bytes;
+	uint16 status;
+	int iPutPos = 5;
+
 	// wait for setup to complete
 	vos_wait_semaphore(&setupSem);
 	vos_signal_semaphore(&setupSem);
 	
+
+	// byte 1 is usb port number
+	// byte 2 is midi command or 0 for none
+	// byte 3 is midi param 1
+	// byte 4 is midi param 2
+	
 	for(;;)
 	{
-		vos_dev_read(hUART, &uch, 1, &num_read);
-		if(num_read > 0)
+		uint8 ch;
+		status = vos_dev_read(hSPISlave, &ch, 1, &num_bytes);				
+		if(0 == status)
 		{
-			if(uch == 0xf8)
+			if(ch == 0xff)
 			{
-				msg.status = 0xf8;
-				msg.param1 = 0x00;
-				msg.param2 = 0x00;
-				SMQWrite(&msg);
+				iPutPos = 0;
+			}
+			else if(iPutPos < 4)
+			{
+				buf[iPutPos++] = ch;
+				if(iPutPos == 4)
+				{
+					setGpioA(LED_ACTIVITY, LED_ACTIVITY);
+					if(buf[0] == 1)
+					{
+						if(buf[1])
+							vos_dev_write(PortB.hUSBHOSTGENERIC, &buf[1], 3, &num_bytes);
+						else
+							vos_dev_write(PortB.hUSBHOSTGENERIC, &buf[2], 2, &num_bytes);
+					}
+					else 
+					{
+						if(buf[1])
+							vos_dev_write(PortA.hUSBHOSTGENERIC, &buf[1], 3, &num_bytes);
+						else
+							vos_dev_write(PortA.hUSBHOSTGENERIC, &buf[2], 2, &num_bytes);
+					}
+					setGpioA(LED_ACTIVITY, 0);
+				}
 			}
 		}
 	}
-	
-}
-	
-//////////////////////////////////////////////////////////////////////
-// Write raw data to MIDI UART
-void MIDIWrite(byte status, byte param1, byte param2)
-{
-	byte msg[3];
-	msg[0] = status;
-	msg[1] = param1;
-	msg[2] = param2;
-	vos_dev_write(hUART, msg, 3, NULL);	
-}
-	
-//////////////////////////////////////////////////////////////////////
-// Write raw data to Launchpad
-void LPWrite(byte status, byte param1, byte param2)
-{
-	byte msg[3];
-	msg[0] = status;
-	msg[1] = param1;
-	msg[2] = param2;
-	vos_dev_write(PortA.hUSBHOSTGENERIC, msg, 3, NULL);	
-}
-		
-//////////////////////////////////////////////////////////////////////
-// Send a MIDI note message to Launchpad to set/clear a LED
-void LPSetLED(int row, int col, int colour)
-{
-	LPWrite(0x90, (byte)(row *16 + col), (byte)colour);
 }
 
-//////////////////////////////////////////////////////////////////////
-// Start updating the LEDs
-void LPBeginBufferedUpdate()
-{
-	// copy displayed data from buffer 0 (displayed) into buffer 1
-	LPWrite(0xb0, 0x00, 0b0110100);
-
-	// start updating buffer 0, display buffer 1
-	LPWrite(0xb0, 0x00, 0b0100001);
 	
-}
-	
-//////////////////////////////////////////////////////////////////////
-// Finisg updating the LEDs
-void LPEndBufferedUpdate()
-{
-	// display and update buffer 0
-	LPWrite(0xb0, 0x00, 0b0100000);	
-}
-	
-	/*
-Bit Name Meaning
-6 Must be 0.
-5 Must be 1.
-4 Copy If 1: copy the LED states from the new ‘displayed’
-buffer to the new ‘updating’ buffer.
-3 Flash If 1: continually flip ‘displayed’ buffers to make
-selected LEDs flash.
-2 Update Set buffer 0 or buffer 1 as the new ‘updating’ buffer.
-1 Must be 0.
-0 Display Set buffer 0 or buffer 1 as the new ‘displaying’
-buffer
-	*/
-//////////////////////////////////////////////////////////////////////
-// Play a note
-void MIDIPlayNote(byte note, byte velocity)
-{
-	MIDIWrite(0x90, note, velocity);
-}
-		
-//////////////////////////////////////////////////////////////////////
-// Stop a note
-void MIDIStopNote(byte note)
-{
-	MIDIWrite(0x90, note, 0x00);
-}
-
-/////////////////////////////////////////////////////////////////////
-// Thread to dispatch tick events to the playpad thread
-// at timed intervals
-void RunMetronome() 
-{
-	SMQ_MSG tick;		
-	
-	// wait for setup to complete
-	vos_wait_semaphore(&setupSem);
-	vos_signal_semaphore(&setupSem);
-	
-	// Prepare standard tick message
-	tick.status = 0xf8;
-	tick.param1 = 0x00;
-	tick.param2 = 0x00;
-	
-	// Start the metronome
-	MetroStart(&metro, VOS_DEV_TIMER0, 120);
-	for(;;) 
-	{
-		// run!
-		SMQWrite(&tick);
-		MetroDelay(&metro);
-	}
-}
-		
-////////////////////////////////////////////////////////////////////
-// Main application thread
-void RunPlaypad()
-{
-	SMQ_MSG msg;	
-	
-	// wait for setup to complete
-	vos_wait_semaphore(&setupSem);
-	vos_signal_semaphore(&setupSem);
-		
-	//arpie_init();
-	
-	for(;;)
-	{
-			setLed(255,!!(getGPIO()&8));
-		/*
-		//SMQRead(&msg);
-		switch(msg.status)
-		{
-			case 0x80:
-			case 0x90:
-				if(msg.status == 0x80 || msg.param2 == 0)
-				{
-//					arpie_event(EVENT_KEYUP, msg.param1/16, msg.param1%16);
-				}
-				else
-				{
-					//arpie_event(EVENT_KEYDOWN, msg.param1/16, msg.param1%16);
-				}
-				break;
-			case 0xf8: // clock tick
-				//arpie_event(EVENT_TICK, 0, 0);
-				break;
-		}
-	*/
-	}
-}
-

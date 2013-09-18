@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <VinTag>
  <version>1.0.0</version>
- <file name="Arpie.c">
+ <file name="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
   <enum name="IOMUX_SIGNALS" line="24" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\iomux.h">
    <value name="IOMUX_IN_DEBUGGER" const="0"/>
    <value name="IOMUX_IN_UART_RXD" const="1"/>
@@ -218,6 +218,13 @@
    <member name="gpio_port_e" offset="32" size="8"
     basetype="CHAR" baseattr="unsigned,"/>
   </struct>
+  <enum name="SPISLAVE_STATUS" line="64" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\SPISlave.h">
+   <value name="SPISLAVE_OK" const="0"/>
+   <value name="SPISLAVE_INVALID_PARAMETER" const="1"/>
+   <value name="SPISLAVE_DMA_NOT_ENABLED" const="2"/>
+   <value name="SPISLAVE_ERROR" const="3"/>
+   <value name="SPISLAVE_FATAL_ERROR" const="255"/>
+  </enum>
   <struct name="_vos_semaphore_list_t" line="150" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\vos.h">
    <member name="next" offset="0" size="16"
     basename="_vos_semaphore_list_t" basetype="STRUCT" baseattr="ptr,"/>
@@ -247,6 +254,20 @@
     basename="_vos_driver_t" basetype="STRUCT" baseattr="ptr,"/>
    <member name="context" offset="64" size="16"
     basetype="VOID" baseattr="ptr,"/>
+  </struct>
+  <struct name="_usbhostGeneric_ioctl_cb_attach_t" line="52" file="USBHostGenericDrv.h">
+   <member name="hc_handle" offset="0" size="16"
+    basetype="SHORT" baseattr="unsigned,"/>
+   <member name="ifDev" offset="16" size="32"
+    basetype="INT" baseattr="signed,"/>
+  </struct>
+  <struct name="_usbhostGeneric_ioctl_t" line="59" file="USBHostGenericDrv.h">
+   <member name="ioctl_code" offset="0" size="8"
+    basetype="CHAR" baseattr="unsigned,"/>
+   <member name="set" offset="8" size="16"
+    basename="__unnamed_struct_7" basetype="STRUCT" baseattr=""/>
+   <member name="get" offset="24" size="16"
+    basename="__unnamed_struct_8" basetype="STRUCT" baseattr=""/>
   </struct>
   <struct name="_vos_driver_t" line="25" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\devman.h">
    <member name="open" offset="0" size="32"
@@ -322,9 +343,15 @@
    <member name="zero" offset="104" size="8"
     basetype="CHAR" baseattr="unsigned,"/>
   </struct>
-  <struct name="_uart_context_t" line="109" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\UART.h">
-   <member name="buffer_size" offset="0" size="8"
-    basetype="CHAR" baseattr="unsigned,"/>
+  <struct name="_usbhostGeneric_context_t" line="36" file="USBHostGenericDrv.h">
+   <member name="hc" offset="0" size="16"
+    basetype="SHORT" baseattr="unsigned,"/>
+   <member name="epCtrl" offset="16" size="32"
+    basetype="INT" baseattr="signed,"/>
+   <member name="epIntIn" offset="48" size="32"
+    basetype="INT" baseattr="signed,"/>
+   <member name="epIntOut" offset="80" size="32"
+    basetype="INT" baseattr="signed,"/>
   </struct>
   <enum name="gpioctrl_status" line="26" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\gpioctrl.h">
    <value name="GPIO_OK" const="0"/>
@@ -335,6 +362,13 @@
    <value name="GPIO_INVALID_INTERRUPT_TYPE" const="5"/>
    <value name="GPIO_INTERRUPT_NOT_ENABLED" const="6"/>
    <value name="GPIO_ERROR" const="7"/>
+  </enum>
+  <enum name="USBHOSTGENERIC_STATUS" line="25" file="USBHostGenericDrv.h">
+   <value name="USBHOSTGENERIC_OK" const="0"/>
+   <value name="USBHOSTGENERIC_INVALID_PARAMETER" const="1"/>
+   <value name="USBHOSTGENERIC_ERROR" const="2"/>
+   <value name="USBHOSTGENERIC_NOT_FOUND" const="3"/>
+   <value name="USBHOSTGENERIC_USBHOST_ERROR" const="128"/>
   </enum>
   <struct name="_gpio_ioctl_cb_t" line="84" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\GPIO.h">
    <member name="ioctl_code" offset="0" size="8"
@@ -439,28 +473,26 @@
    <member name="data" offset="0" size="16"
     basetype="VOID" baseattr="ptr,"/>
   </struct>
-  <struct name="__unnamed_struct_7" line="20" file="Arpie.c">
-   <member name="note" offset="0" size="384"
-    basetype="CHAR" baseattr="unsigned," basearray="48,"/>
-   <member name="status" offset="384" size="384"
-    basetype="CHAR" baseattr="unsigned," basearray="48,"/>
-   <member name="pattern" offset="768" size="128"
-    basetype="CHAR" baseattr="unsigned," basearray="16,"/>
-   <member name="ticks" offset="896" size="32"
-    basetype="LONG" baseattr="unsigned,"/>
-   <member name="quantum" offset="928" size="32"
-    basetype="INT" baseattr="signed,"/>
-   <member name="index" offset="960" size="32"
-    basetype="INT" baseattr="signed,"/>
-   <member name="shift" offset="992" size="8"
+  <struct name="__unnamed_struct_7" line="65" file="USBHostGenericDrv.h">
+   <member name="data" offset="0" size="16"
+    basetype="CHAR" baseattr="unsigned,ptr,"/>
+   <member name="att" offset="0" size="16"
+    basename="_usbhostGeneric_ioctl_cb_attach_t" basetype="STRUCT" baseattr="ptr,"/>
+  </struct>
+  <struct name="__unnamed_struct_8" line="69" file="USBHostGenericDrv.h">
+   <member name="data" offset="0" size="16"
+    basetype="CHAR" baseattr="unsigned,ptr,"/>
+  </struct>
+  <struct name="__unnamed_struct_9" line="21" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+   <member name="hUSBHOST" offset="0" size="16"
+    basetype="SHORT" baseattr="unsigned,"/>
+   <member name="hUSBHOSTGENERIC" offset="16" size="16"
+    basetype="SHORT" baseattr="unsigned,"/>
+   <member name="uchDeviceNumber" offset="32" size="8"
     basetype="CHAR" baseattr="unsigned,"/>
-   <member name="nextRed" offset="1000" size="32"
-    basetype="INT" baseattr="signed,"/>
-   <member name="nextGreen" offset="1032" size="32"
-    basetype="INT" baseattr="signed,"/>
-   <member name="redNote" offset="1064" size="8"
+   <member name="uchActivityLed" offset="40" size="8"
     basetype="CHAR" baseattr="unsigned,"/>
-   <member name="greenNote" offset="1072" size="8"
+   <member name="uchChannel" offset="48" size="8"
     basetype="CHAR" baseattr="unsigned,"/>
   </struct>
   <struct name="_common_ioctl_cb_t" line="58" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\ioctl.h">
@@ -478,13 +510,6 @@
    <value name="GPIO_INTERRUPT_NOT_ENABLED" const="3"/>
    <value name="GPIO_ERROR" const="4"/>
    <value name="GPIO_FATAL_ERROR" const="255"/>
-  </enum>
-  <enum name="UART_STATUS" line="100" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\UART.h">
-   <value name="UART_OK" const="0"/>
-   <value name="UART_INVALID_PARAMETER" const="1"/>
-   <value name="UART_DMA_NOT_ENABLED" const="2"/>
-   <value name="UART_ERROR" const="3"/>
-   <value name="UART_FATAL_ERROR" const="255"/>
   </enum>
   <struct name="_usbhost_ioctl_cb_dev_info_t" line="315" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\USBHost.h">
    <member name="port_number" offset="0" size="8"
@@ -564,10 +589,28 @@
    <member name="frame" offset="240" size="16"
     basetype="SHORT" baseattr="unsigned,"/>
   </struct>
+  <struct name="_spislave_context_t" line="73" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\SPISlave.h">
+   <member name="slavenumber" offset="0" size="8"
+    basetype="CHAR" baseattr="unsigned,"/>
+   <member name="buffer_size" offset="8" size="8"
+    basetype="CHAR" baseattr="unsigned,"/>
+  </struct>
   <typedef name="vos_gpio_t" line="111" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\gpioctrl.h"
    basename="_vos_gpio_t" basetype="STRUCT" baseattr=""/>
   <typedef name="usbhost_ep_handle_ex" line="132" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\USBHost.h"
    basetype="INT" baseattr="signed,"/>
+  <struct name="HOST_PORT_DATA" line="21" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"    attr="" size="56">
+   <member name="hUSBHOST" offset="0" size="16"
+    basetype="SHORT" baseattr="unsigned,"/>
+   <member name="hUSBHOSTGENERIC" offset="16" size="16"
+    basetype="SHORT" baseattr="unsigned,"/>
+   <member name="uchDeviceNumber" offset="32" size="8"
+    basetype="CHAR" baseattr="unsigned,"/>
+   <member name="uchActivityLed" offset="40" size="8"
+    basetype="CHAR" baseattr="unsigned,"/>
+   <member name="uchChannel" offset="48" size="8"
+    basetype="CHAR" baseattr="unsigned,"/>
+  </struct>
   <typedef name="vos_semaphore_list_t" line="156" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\vos.h"
    basename="_vos_semaphore_list_t" basetype="STRUCT" baseattr=""/>
   <proto name="PF" line="35" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\vos.h"
@@ -581,6 +624,10 @@
    basename="_vos_mutex_t" basetype="STRUCT" baseattr=""/>
   <typedef name="vos_device_t" line="40" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\devman.h"
    basename="_vos_device_t" basetype="STRUCT" baseattr=""/>
+  <typedef name="usbhostGeneric_ioctl_cb_attach_t" line="56" file="USBHostGenericDrv.h"
+   basename="_usbhostGeneric_ioctl_cb_attach_t" basetype="STRUCT" baseattr=""/>
+  <typedef name="usbhostGeneric_ioctl_t" line="70" file="USBHostGenericDrv.h"
+   basename="_usbhostGeneric_ioctl_t" basetype="STRUCT" baseattr=""/>
   <typedef name="vos_driver_t" line="33" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\devman.h"
    basename="_vos_driver_t" basetype="STRUCT" baseattr=""/>
   <typedef name="vos_system_data_area_t" line="198" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\vos.h"
@@ -596,7 +643,7 @@
    <typedef name="__unknown" line="39" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\vos.h"
     basetype="SHORT" baseattr="unsigned,ptr,"/>
   </proto>
-  <typedef name="byte" line="15" file="Playpad.h"
+  <typedef name="byte" line="16" file="Playpad.h"
    basetype="CHAR" baseattr="unsigned,"/>
   <typedef name="tmr_ioctl_cb_t" line="68" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\timers.h"
    basename="_tmr_ioctl_cb_t" basetype="STRUCT" baseattr=""/>
@@ -613,8 +660,8 @@
    basename="_usbhost_ioctl_cb_class_t" basetype="STRUCT" baseattr=""/>
   <typedef name="usbhost_xfer_t" line="160" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\USBHost.h"
    basename="_usbhost_xfer_t" basetype="STRUCT" baseattr=""/>
-  <typedef name="uart_context_t" line="111" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\UART.h"
-   basename="_uart_context_t" basetype="STRUCT" baseattr=""/>
+  <typedef name="usbhostGeneric_context_t" line="45" file="USBHostGenericDrv.h"
+   basename="_usbhostGeneric_context_t" basetype="STRUCT" baseattr=""/>
   <typedef name="gpio_ioctl_cb_t" line="87" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\GPIO.h"
    basename="_gpio_ioctl_cb_t" basetype="STRUCT" baseattr=""/>
   <proto name="PF_OPEN" line="36" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\vos.h"
@@ -644,30 +691,6 @@
    basename="_usbhost_ioctl_cb_vid_pid_t" basetype="STRUCT" baseattr=""/>
   <typedef name="usbhost_ioctl_cb_ep_info_t" line="333" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\USBHost.h"
    basename="_usbhost_ioctl_cb_ep_info_t" basetype="STRUCT" baseattr=""/>
-  <struct name="ARPIE_DATA" line="20" file="Arpie.c"    attr="" size="1080">
-   <member name="note" offset="0" size="384"
-    basetype="CHAR" baseattr="unsigned," basearray="48,"/>
-   <member name="status" offset="384" size="384"
-    basetype="CHAR" baseattr="unsigned," basearray="48,"/>
-   <member name="pattern" offset="768" size="128"
-    basetype="CHAR" baseattr="unsigned," basearray="16,"/>
-   <member name="ticks" offset="896" size="32"
-    basetype="LONG" baseattr="unsigned,"/>
-   <member name="quantum" offset="928" size="32"
-    basetype="INT" baseattr="signed,"/>
-   <member name="index" offset="960" size="32"
-    basetype="INT" baseattr="signed,"/>
-   <member name="shift" offset="992" size="8"
-    basetype="CHAR" baseattr="unsigned,"/>
-   <member name="nextRed" offset="1000" size="32"
-    basetype="INT" baseattr="signed,"/>
-   <member name="nextGreen" offset="1032" size="32"
-    basetype="INT" baseattr="signed,"/>
-   <member name="redNote" offset="1064" size="8"
-    basetype="CHAR" baseattr="unsigned,"/>
-   <member name="greenNote" offset="1072" size="8"
-    basetype="CHAR" baseattr="unsigned,"/>
-  </struct>
   <typedef name="common_ioctl_cb_t" line="74" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\ioctl.h"
    basename="_common_ioctl_cb_t" basetype="STRUCT" baseattr=""/>
   <typedef name="usbhost_ep_handle" line="131" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\USBHost.h"
@@ -683,25 +706,45 @@
   <proto name="fnVoidPtr" line="42" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\vos.h"
    basetype="VOID" baseattr="">
   </proto>
+  <typedef name="spislave_context_t" line="76" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\SPISlave.h"
+   basename="_spislave_context_t" basetype="STRUCT" baseattr=""/>
   <typedef name="vos_tcb_t" line="95" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\vos.h"
    basename="_vos_tcb_t" basetype="STRUCT" baseattr=""/>
-  <proto name="arpie_done" line="62" file="Arpie.c"
+  <label name="main_loop" line="147" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"/>  <proto name="RunSPISlave" line="379" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    basetype="VOID" baseattr="">
   </proto>
-  <proto name="arpie_init" line="37" file="Arpie.c"
+  <proto name="RunHostPort" line="250" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   basetype="VOID" baseattr="">
+   <var name="pHostData" line="250" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+    type="AUTO" storage="AUTO VAR" attr="param,"
+    basename="__unnamed_struct_9" basetype="STRUCT" baseattr="ptr,"/>
+  </proto>
+  <proto name="iomux_setup" line="63" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    basetype="VOID" baseattr="">
   </proto>
-  <proto name="arpie_event" line="68" file="Arpie.c"
+  <proto name="usbhost_connect_state" line="229" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   basetype="CHAR" baseattr="unsigned,">
+   <var name="hUSB" line="229" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+    type="AUTO" storage="AUTO VAR" attr="param,"
+    basetype="SHORT" baseattr="unsigned,"/>
+  </proto>
+  <proto name="main" line="99" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    basetype="VOID" baseattr="">
-   <var name="type" line="68" file="Arpie.c"
+  </proto>
+  <proto name="Setup" line="156" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   basetype="VOID" baseattr="">
+  </proto>
+  <proto name="getGPIO" line="217" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   basetype="CHAR" baseattr="unsigned,">
+  </proto>
+  <proto name="setGpioA" line="88" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   basetype="VOID" baseattr="">
+   <var name="mask" line="88" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
     type="AUTO" storage="AUTO VAR" attr="param,"
-    basetype="INT" baseattr="signed,"/>
-   <var name="row" line="68" file="Arpie.c"
+    basetype="CHAR" baseattr="unsigned,"/>
+   <var name="data" line="88" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
     type="AUTO" storage="AUTO VAR" attr="param,"
-    basetype="INT" baseattr="signed,"/>
-   <var name="col" line="68" file="Arpie.c"
-    type="AUTO" storage="AUTO VAR" attr="param,"
-    basetype="INT" baseattr="signed,"/>
+    basetype="CHAR" baseattr="unsigned,"/>
   </proto>
   <proto name="vos_dma_get_fifo_flow_control" line="82" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\dma.h"
    basetype="CHAR" baseattr="unsigned,">
@@ -724,6 +767,9 @@
     type="AUTO" storage="AUTO VAR" attr="param,"
     basetype="CHAR" baseattr="unsigned,"/>
   </proto>
+  <proto name="arpie_done" line="66" file="Playpad.h"
+   basetype="VOID" baseattr="">
+  </proto>
   <proto name="vos_signal_semaphore_from_isr" line="168" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\vos.h"
    basetype="VOID" baseattr="">
    <var name="s" line="168" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\vos.h"
@@ -741,6 +787,9 @@
    <var name="col" line="59" file="Playpad.h"
     type="AUTO" storage="AUTO VAR" attr="param,"
     basetype="INT" baseattr="signed,"/>
+  </proto>
+  <proto name="arpie_init" line="65" file="Playpad.h"
+   basetype="VOID" baseattr="">
   </proto>
   <proto name="vos_malloc" line="24" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\memmgmt.h"
    basetype="VOID" baseattr="ptr,">
@@ -843,6 +892,18 @@
    <var name="dat" line="84" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\dma.h"
     type="AUTO" storage="AUTO VAR" attr="param,"
     basetype="CHAR" baseattr="unsigned,ptr,"/>
+  </proto>
+  <proto name="arpie_event" line="67" file="Playpad.h"
+   basetype="VOID" baseattr="">
+   <var name="type" line="67" file="Playpad.h"
+    type="AUTO" storage="AUTO VAR" attr="param,"
+    basetype="INT" baseattr="signed,"/>
+   <var name="row" line="67" file="Playpad.h"
+    type="AUTO" storage="AUTO VAR" attr="param,"
+    basetype="INT" baseattr="signed,"/>
+   <var name="col" line="67" file="Playpad.h"
+    type="AUTO" storage="AUTO VAR" attr="param,"
+    basetype="INT" baseattr="signed,"/>
   </proto>
   <proto name="vos_iocell_get_config" line="228" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\iomux.h"
    basetype="CHAR" baseattr="unsigned,">
@@ -1032,6 +1093,15 @@
    <var name="cb" line="56" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\devman.h"
     type="AUTO" storage="AUTO VAR" attr="param,"
     basetype="VOID" baseattr="ptr,"/>
+  </proto>
+  <proto name="spislave_init" line="82" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\SPISlave.h"
+   basetype="CHAR" baseattr="unsigned,">
+   <var name="devNum" line="80" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\SPISlave.h"
+    type="AUTO" storage="AUTO VAR" attr="param,"
+    basetype="CHAR" baseattr="unsigned,"/>
+   <var name="context" line="81" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\SPISlave.h"
+    type="AUTO" storage="AUTO VAR" attr="param,"
+    basename="_spislave_context_t" basetype="STRUCT" baseattr="ptr,"/>
   </proto>
   <proto name="vos_dev_write" line="55" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\devman.h"
    basetype="CHAR" baseattr="unsigned,">
@@ -1543,15 +1613,6 @@
     type="AUTO" storage="AUTO VAR" attr="param,"
     basetype="VOID" baseattr="ptr,"/>
   </proto>
-  <proto name="uart_init" line="117" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\UART.h"
-   basetype="CHAR" baseattr="unsigned,">
-   <var name="devNum" line="115" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\UART.h"
-    type="AUTO" storage="AUTO VAR" attr="param,"
-    basetype="CHAR" baseattr="unsigned,"/>
-   <var name="context" line="116" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\UART.h"
-    type="AUTO" storage="AUTO VAR" attr="param,"
-    basename="_uart_context_t" basetype="STRUCT" baseattr="ptr,"/>
-  </proto>
   <proto name="vos_gpio_enable_int" line="128" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\gpioctrl.h"
    basetype="CHAR" baseattr="unsigned,">
    <var name="intNum" line="128" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\gpioctrl.h"
@@ -1564,70 +1625,215 @@
     type="AUTO" storage="AUTO VAR" attr="param,"
     basetype="CHAR" baseattr="unsigned,"/>
   </proto>
+  <proto name="usbhostGeneric_init" line="72" file="USBHostGenericDrv.h"
+   basetype="CHAR" baseattr="unsigned,">
+   <var name="vos_dev_num" line="72" file="USBHostGenericDrv.h"
+    type="AUTO" storage="AUTO VAR" attr="param,"
+    basetype="CHAR" baseattr="unsigned,"/>
+  </proto>
   <proto name="vos_signal_cond_var" line="182" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\vos.h"
    basetype="VOID" baseattr="">
    <var name="cv" line="182" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\vos.h"
     type="AUTO" storage="AUTO VAR" attr="param,"
     basename="_vos_cond_var_t" basetype="STRUCT" baseattr="ptr,"/>
   </proto>
-  <var name="pData" line="36" file="Arpie.c"
+  <var name="tcbSPISlave" line="29" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    type="AUTO" storage="AUTO VAR" attr="global,"
-   basename="__unnamed_struct_7" basetype="STRUCT" baseattr="ptr,"/>
- <function name="arpie_init" line="37" file="Arpie.c" 
+   basename="_vos_tcb_t" basetype="STRUCT" baseattr="ptr,"/>
+  <var name="gpioAOutput" line="42" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   type="AUTO" storage="AUTO VAR" attr="global,"
+   basetype="CHAR" baseattr="unsigned,"/>
+  <var name="buf" line="36" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   type="AUTO" storage="AUTO VAR" attr="global,"
+   basetype="CHAR" baseattr="unsigned," basearray="512,"/>
+  <var name="pBuf" line="37" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   type="AUTO" storage="AUTO VAR" attr="global,"
+   basetype="SHORT" baseattr="unsigned,"/>
+  <var name="PortA" line="40" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   type="AUTO" storage="AUTO VAR" attr="global,"
+   basename="__unnamed_struct_9" basetype="STRUCT" baseattr=""/>
+  <var name="PortB" line="41" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   type="AUTO" storage="AUTO VAR" attr="global,"
+   basename="__unnamed_struct_9" basetype="STRUCT" baseattr=""/>
+  <var name="hGpioA" line="33" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   type="AUTO" storage="AUTO VAR" attr="global,"
+   basetype="SHORT" baseattr="unsigned,"/>
+  <var name="tcbHostA" line="27" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   type="AUTO" storage="AUTO VAR" attr="global,"
+   basename="_vos_tcb_t" basetype="STRUCT" baseattr="ptr,"/>
+  <var name="tcbHostB" line="28" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   type="AUTO" storage="AUTO VAR" attr="global,"
+   basename="_vos_tcb_t" basetype="STRUCT" baseattr="ptr,"/>
+  <var name="tcbSetup" line="26" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   type="AUTO" storage="AUTO VAR" attr="global,"
+   basename="_vos_tcb_t" basetype="STRUCT" baseattr="ptr,"/>
+  <var name="hSPISlave" line="34" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   type="AUTO" storage="AUTO VAR" attr="global,"
+   basetype="SHORT" baseattr="unsigned,"/>
+  <var name="setupSem" line="31" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   type="AUTO" storage="AUTO VAR" attr="global,"
+   basename="_vos_semaphore_t" basetype="STRUCT" baseattr=""/>
+ <function name="iomux_setup" line="63" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
   basetype="VOID" baseattr="">
-  <block line="38" file="Arpie.c">
-    <var name="row" line="39" file="Arpie.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basetype="INT" baseattr="signed,"/>
-    <var name="note" line="41" file="Arpie.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basetype="INT" baseattr="signed,"/>
-    <var name="col" line="40" file="Arpie.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basetype="INT" baseattr="signed,"/>
+  <block line="64" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
   </block>
  </function>
- <function name="arpie_done" line="62" file="Arpie.c" 
+ <function name="setGpioA" line="88" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
   basetype="VOID" baseattr="">
-  <block line="63" file="Arpie.c">
+  <var name="mask" line="88" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   type="AUTO" storage="AUTO VAR" attr="param,"
+   basetype="CHAR" baseattr="unsigned,"/>
+  <var name="data" line="88" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   type="AUTO" storage="AUTO VAR" attr="param,"
+   basetype="CHAR" baseattr="unsigned,"/>
+  <block line="89" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+    <var name="data" line="88" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr="param,"
+     basetype="CHAR" baseattr="unsigned,"/>
+    <var name="mask" line="88" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr="param,"
+     basetype="CHAR" baseattr="unsigned,"/>
   </block>
  </function>
- <function name="arpie_event" line="68" file="Arpie.c" 
+ <function name="main" line="99" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
   basetype="VOID" baseattr="">
-  <block line="69" file="Arpie.c">
-    <var name="type" line="68" file="Arpie.c"
+  <block line="100" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+    <var name="gpioCtx" line="102" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basename="_gpio_context_t" basetype="STRUCT" baseattr=""/>
+    <var name="usbhostContext" line="101" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basename="_usbhost_context_t" basetype="STRUCT" baseattr=""/>
+  </block>
+ </function>
+ <function name="Setup" line="156" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
+  basetype="VOID" baseattr="">
+  <block line="157" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+    <var name="uchLeds" line="162" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basetype="CHAR" baseattr="unsigned,"/>
+    <var name="generic_iocb" line="159" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basename="_usbhostGeneric_ioctl_t" basetype="STRUCT" baseattr=""/>
+    <var name="ss_iocb" line="163" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basename="_common_ioctl_cb_t" basetype="STRUCT" baseattr=""/>
+    <var name="gpio_iocb" line="160" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basename="_gpio_ioctl_cb_t" basetype="STRUCT" baseattr=""/>
+    <var name="uart_iocb" line="161" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basename="_common_ioctl_cb_t" basetype="STRUCT" baseattr=""/>
+    <var name="spis_iocb" line="158" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basename="_common_ioctl_cb_t" basetype="STRUCT" baseattr=""/>
+  </block>
+ </function>
+ <function name="getGPIO" line="217" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
+  basetype="CHAR" baseattr="unsigned,">
+  <block line="218" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+    <var name="gpio" line="219" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basetype="CHAR" baseattr="unsigned,"/>
+  </block>
+ </function>
+ <function name="usbhost_connect_state" line="229" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
+  basetype="CHAR" baseattr="unsigned,">
+  <var name="hUSB" line="229" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   type="AUTO" storage="AUTO VAR" attr="param,"
+   basetype="SHORT" baseattr="unsigned,"/>
+  <block line="230" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+    <var name="hc_iocb" line="232" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basename="_usbhost_ioctl_cb_t" basetype="STRUCT" baseattr=""/>
+    <var name="connectstate" line="231" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basetype="CHAR" baseattr="unsigned,"/>
+    <var name="hUSB" line="229" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr="param,"
-     basetype="INT" baseattr="signed,"/>
-    <var name="row" line="68" file="Arpie.c"
+     basetype="SHORT" baseattr="unsigned,"/>
+   <block line="234" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+   </block>
+  </block>
+ </function>
+ <function name="RunHostPort" line="250" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
+  basetype="VOID" baseattr="">
+  <block line="251" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+    <var name="hc_iocb_vid_pid" line="261" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basename="_usbhost_ioctl_cb_vid_pid_t" basetype="STRUCT" baseattr=""/>
+    <var name="genericAtt" line="258" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basename="_usbhostGeneric_ioctl_cb_attach_t" basetype="STRUCT" baseattr=""/>
+    <var name="hc_iocb" line="260" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basename="_usbhost_ioctl_cb_t" basetype="STRUCT" baseattr=""/>
+    <var name="msg" line="254" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basetype="CHAR" baseattr="unsigned," basearray="4,"/>
+    <var name="pHostData" line="250" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr="param,"
-     basetype="INT" baseattr="signed,"/>
-    <var name="i" line="70" file="Arpie.c"
+     basename="__unnamed_struct_9" basetype="STRUCT" baseattr="ptr,"/>
+    <var name="num_bytes" line="255" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basetype="SHORT" baseattr="unsigned,"/>
+    <var name="generic_iocb" line="257" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basename="_usbhostGeneric_ioctl_t" basetype="STRUCT" baseattr=""/>
+    <var name="status" line="252" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basetype="CHAR" baseattr="unsigned,"/>
+    <var name="gpio_iocb" line="262" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basename="_gpio_ioctl_cb_t" basetype="STRUCT" baseattr=""/>
+    <var name="handle" line="256" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basetype="INT" baseattr="unsigned,"/>
+    <var name="ifDev" line="259" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr=""
      basetype="INT" baseattr="signed,"/>
-    <var name="col" line="68" file="Arpie.c"
-     type="AUTO" storage="AUTO VAR" attr="param,"
+    <var name="buf" line="253" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basetype="CHAR" baseattr="unsigned," basearray="64,"/>
+   <block line="270" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+    <block line="272" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+     <block line="279" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+      <block line="292" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+       <block line="299" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+         <var name="param" line="301" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+          type="AUTO" storage="AUTO VAR" attr=""
+          basetype="CHAR" baseattr="unsigned,"/>
+         <var name="pos" line="300" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+          type="AUTO" storage="AUTO VAR" attr=""
+          basetype="INT" baseattr="signed,"/>
+       </block>
+      </block>
+     </block>
+    </block>
+   </block>
+  </block>
+ </function>
+ <function name="RunSPISlave" line="379" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
+  basetype="VOID" baseattr="">
+  <block line="380" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+    <var name="iPutPos" line="384" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
      basetype="INT" baseattr="signed,"/>
-   <block line="72" file="Arpie.c">
-    <block line="75" file="Arpie.c">
-    </block>
-    <block line="105" file="Arpie.c">
-    </block>
-    <block line="111" file="Arpie.c">
-     <block line="113" file="Arpie.c">
-     </block>
-     <block line="118" file="Arpie.c">
-     </block>
-     <block line="135" file="Arpie.c">
-     </block>
-     <block line="141" file="Arpie.c">
-     </block>
-     <block line="146" file="Arpie.c">
-     </block>
-     <block line="152" file="Arpie.c">
-     </block>
-     <block line="158" file="Arpie.c">
-     </block>
-     <block line="163" file="Arpie.c">
+    <var name="num_bytes" line="382" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basetype="SHORT" baseattr="unsigned,"/>
+    <var name="status" line="383" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basetype="SHORT" baseattr="unsigned,"/>
+    <var name="buf" line="381" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basetype="CHAR" baseattr="unsigned," basearray="4,"/>
+   <block line="397" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+     <var name="ch" line="398" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+      type="AUTO" storage="AUTO VAR" attr=""
+      basetype="CHAR" baseattr="unsigned,"/>
+    <block line="400" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+     <block line="403" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
      </block>
     </block>
    </block>

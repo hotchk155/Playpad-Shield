@@ -1,12 +1,12 @@
 /////////////////////////////////////////////////////////////////////////////
-// Synchronised MIDI Queue
+// Synchronised Message Queue
 /////////////////////////////////////////////////////////////////////////////
 #include "stdlib.h"
 #include "vos.h"
-#include "SynchMIDIQueue.h"
+#include "SynchMessageQueue.h"
 
-#define SMQ_LEN 50
-SMQ_MSG queue[SMQ_LEN];
+#define QUEUE_SIZE 100
+uint8 queue[QUEUE_SIZE];
 int head; 
 int tail;
 vos_semaphore_t semAvailable;
@@ -22,12 +22,15 @@ void SMQInit()
 	vos_init_mutex(&mAccess,0);	
 }
 	
+int incHead(int oldHe
+	
 /////////////////////////////////////////////////////////////////////////////
 // WRITE
-void SMQWrite(SMQ_MSG *msg)
+void SMQWrite(uint8 tag, uint8 device, int size, uint8 *data)
 {
 	int newHead;
 	vos_lock_mutex(&mAccess);
+	
 	newHead = head + 1;
 	if(newHead >= SMQ_LEN)
 		newHead = 0;

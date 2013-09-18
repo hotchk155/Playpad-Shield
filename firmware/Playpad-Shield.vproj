@@ -62,7 +62,7 @@
 			<AdditionalOpts></AdditionalOpts>
 		</LinkerOptions>
 	</ReleaseMode>
-	<BuildMode>Release</BuildMode>
+	<BuildMode>Debug</BuildMode>
 	<VirtualFolderGroup>
 		<Name>FTDI Libraries</Name>
 		<ID>{00000000-0000-0000-0000-000000000001}</ID>
@@ -523,16 +523,6 @@
 	</VirtualFolderGroup>
 	<VirtualFolderGroup>
 		<Name>Drivers</Name>
-		<ID>{00000000-0000-0000-0000-000000000005}</ID>
-		<ParentID>{00000000-0000-0000-0000-000000000002}</ParentID>
-	</VirtualFolderGroup>
-	<VirtualFolderGroup>
-		<Name>Drivers</Name>
-		<ID>{00000000-0000-0000-0000-000000000008}</ID>
-		<ParentID>{00000000-0000-0000-0000-000000000003}</ParentID>
-	</VirtualFolderGroup>
-	<VirtualFolderGroup>
-		<Name>Drivers</Name>
 		<ID>{00000000-0000-0000-0000-000000000008}</ID>
 		<ParentID>{00000000-0000-0000-0000-000000000003}</ParentID>
 	</VirtualFolderGroup>
@@ -629,11 +619,6 @@
 	<VirtualFolderGroup>
 		<Name>Drivers</Name>
 		<ID>{00000000-0000-0000-0000-000000000005}</ID>
-		<ParentID>{00000000-0000-0000-0000-000000000002}</ParentID>
-	</VirtualFolderGroup>
-	<VirtualFolderGroup>
-		<Name>Runtime</Name>
-		<ID>{00000000-0000-0000-0000-000000000006}</ID>
 		<ParentID>{00000000-0000-0000-0000-000000000002}</ParentID>
 	</VirtualFolderGroup>
 	<VirtualFolderGroup>
@@ -916,46 +901,6 @@
 		<ID>{00000000-0000-0000-0000-000000000006}</ID>
 		<ParentID>{00000000-0000-0000-0000-000000000002}</ParentID>
 	</VirtualFolderGroup>
-	<Files>
-		<filename>SynchMIDIQueue.h</filename>
-		<fileDir></fileDir>
-		<fileType>4</fileType>
-		<isFileDirty>false</isFileDirty>
-		<VirtualFolder></VirtualFolder>
-	</Files>
-	<BuildList>
-		<filename>SynchMIDIQueue.h</filename>
-	</BuildList>
-	<Files>
-		<filename>SynchMIDIQueue.c</filename>
-		<fileDir></fileDir>
-		<fileType>1</fileType>
-		<isFileDirty>false</isFileDirty>
-		<VirtualFolder></VirtualFolder>
-	</Files>
-	<BuildList>
-		<filename>SynchMIDIQueue.c</filename>
-	</BuildList>
-	<Files>
-		<filename>Metronome.c</filename>
-		<fileDir></fileDir>
-		<fileType>1</fileType>
-		<isFileDirty>false</isFileDirty>
-		<VirtualFolder></VirtualFolder>
-	</Files>
-	<BuildList>
-		<filename>Metronome.c</filename>
-	</BuildList>
-	<Files>
-		<filename>Metronome.h</filename>
-		<fileDir></fileDir>
-		<fileType>4</fileType>
-		<isFileDirty>false</isFileDirty>
-		<VirtualFolder></VirtualFolder>
-	</Files>
-	<BuildList>
-		<filename>Metronome.h</filename>
-	</BuildList>
 	<Files>
 		<filename>Playpad.h</filename>
 		<fileDir></fileDir>
@@ -1020,13 +965,6 @@
 	</LibraryFiles>
 	<LibraryFiles>
 		<fileDir></fileDir>
-		<filename>UART.h</filename>
-		<fileType>4</fileType>
-		<isFileDirty>false</isFileDirty>
-		<VirtualFolder>{00000000-0000-0000-0000-000000000005}</VirtualFolder>
-	</LibraryFiles>
-	<LibraryFiles>
-		<fileDir></fileDir>
 		<filename>Timers.h</filename>
 		<fileType>4</fileType>
 		<isFileDirty>false</isFileDirty>
@@ -1039,6 +977,26 @@
 		<isFileDirty>false</isFileDirty>
 		<VirtualFolder>{00000000-0000-0000-0000-000000000005}</VirtualFolder>
 	</LibraryFiles>
+	<Files>
+		<filename>SynchFIFO.h</filename>
+		<fileDir></fileDir>
+		<fileType>4</fileType>
+		<isFileDirty>false</isFileDirty>
+		<VirtualFolder></VirtualFolder>
+	</Files>
+	<BuildList>
+		<filename>SynchFIFO.h</filename>
+	</BuildList>
+	<Files>
+		<filename>SynchFIFO.c</filename>
+		<fileDir></fileDir>
+		<fileType>1</fileType>
+		<isFileDirty>false</isFileDirty>
+		<VirtualFolder></VirtualFolder>
+	</Files>
+	<BuildList>
+		<filename>SynchFIFO.c</filename>
+	</BuildList>
 	<LibraryFiles>
 		<fileDir></fileDir>
 		<filename>string.a</filename>
@@ -1123,9 +1081,38 @@
 	</LibraryFiles>
 	<BuildList>
 		<filename>Timers.a</filename>
-	</BuildList>	
-	<OpenFilesList>
+	</BuildList>
+	<LibraryFiles>
+		<fileDir></fileDir>
+		<filename>SPISlave.a</filename>
+		<fileType>3</fileType>
+		<isFileDirty>false</isFileDirty>
+		<VirtualFolder>{00000000-0000-0000-0000-000000000008}</VirtualFolder>
+	</LibraryFiles>
+	<BuildList>
+		<filename>SPISlave.a</filename>
+	</BuildList>	<OpenFilesList>
 		<filename>Playpad.c</filename>
 		<actvieTabIndex>0</actvieTabIndex>
 	</OpenFilesList>
+	<OpenFilesList>
+		<filename>USBHostGenericDrv.c</filename>
+	</OpenFilesList>
+	<OpenFilesList>
+		<filename>SynchFIFO.c</filename>
+	</OpenFilesList>
+	<OpenFilesList>
+		<filename>SynchFIFO.h</filename>
+	</OpenFilesList>
+	<OpenFilesList>
+		<filename>Playpad.h</filename>
+	</OpenFilesList>
+	<OpenFilesList>
+		<filename>USBHostGenericDrv.h</filename>
+	</OpenFilesList>
+	<BreakPointList>
+		<filename>Playpad.c</filename>
+		<lineNo>213</lineNo>
+		<isEnabled>true</isEnabled>
+	</BreakPointList>
 </Project>

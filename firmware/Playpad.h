@@ -6,22 +6,22 @@
 
 #include "USBHost.h"
 #include "ioctl.h"
-#include "UART.h"
+#include "SPISlave.h"
 #include "GPIO.h"
 #include "string.h"
 #include "errno.h"
 #include "timers.h"
+#include "stdlib.h"
 
 typedef unsigned char byte;
 
 #define VOS_DEV_GPIO_A		   		0
-#define VOS_DEV_UART		   		1
+#define VOS_DEV_SPISLAVE	   		1
 #define VOS_DEV_USBHOST_1	  		2
 #define VOS_DEV_USBHOST_2	   		3
 #define VOS_DEV_USBHOSTGENERIC_1   	4
 #define VOS_DEV_USBHOSTGENERIC_2   	5
-#define VOS_DEV_TIMER0   			6
-#define VOS_NUMBER_DEVICES	   		7
+#define VOS_NUMBER_DEVICES	   		6
 
 #define LED_RED_OFF 	0x00
 #define LED_RED_LOW 	0x01
