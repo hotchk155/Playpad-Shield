@@ -8,19 +8,6 @@
 #include "Playpad.h"
 #include "USBHostGenericDrv.h"
 
-
-//
-// TYPE DEFS
-//
-typedef struct {
-	VOS_HANDLE hUSBHOST;
-	VOS_HANDLE hUSBHOSTGENERIC;
-	unsigned char uchDeviceNumberBase;
-	unsigned char uchDeviceNumber;
-	unsigned char uchActivityLed;
-	unsigned char uchChannel;
-} HOST_PORT_DATA;
-	
 //
 // VARIABLE DECL
 //
@@ -34,6 +21,18 @@ vos_semaphore_t setupSem;
 VOS_HANDLE hGpioA;
 VOS_HANDLE hSPISlave;
 
+//
+// TYPE DEFS
+//
+typedef struct {
+	VOS_HANDLE hUSBHOST;
+	VOS_HANDLE hUSBHOSTGENERIC;
+	unsigned char uchDeviceNumberBase;
+	unsigned char uchDeviceNumber;
+	unsigned char uchActivityLed;
+	unsigned char uchChannel;
+} HOST_PORT_DATA;
+	
 unsigned char buf[512];
 unsigned short pBuf = 0;
 
@@ -48,13 +47,66 @@ uint8 gpioAOutput = 0;
 #define LED_USB_A 0x04
 
 	
+	
+#define SZ_FIFO 50
+
+	
+typedef struct {
+	uint32 data[SZ_FIFO];
+	uint8 head;
+	uint8 tail;
+	vos_mutex_t mutex;
+	vos_semaphore_t semaphore;
+} FIFO_TYPE;
+	
+#define FIFO_INC(d) ((d)<SZ_FIFO-1)?(d+1):0
+	
+void fifo_init(FIFO_TYPE *pfifo)
+{
+	memset(pfifo, 0, sizeof(FIFO_TYPE));
+	vos_init_semaphore(&pfifo->semaphore, 0);
+	vos_init_mutex(&pfifo->mutex, VOS_MUTEX_UNLOCKED);
+}
+	
+void fifo_write(FIFO_TYPE *pfifo, uint32 value)
+{
+	uint8 nextHead;
+	vos_lock_mutex(&pfifo->mutex);
+	nextHead = FIFO_INC(pfifo->head);
+	if(nextHead != pfifo->tail)
+	{
+		pfifo->data[pfifo->head] = value;
+		pfifo->head = nextHead;
+		vos_signal_semaphore(&pfifo->semaphore);
+	}
+	vos_unlock_mutex(&pfifo->mutex);	
+}
+
+uint32 fifo_read(FIFO_TYPE *pfifo)
+{
+	uint32 result;
+	vos_wait_semaphore(&pfifo->semaphore);	
+	vos_lock_mutex(&pfifo->mutex);
+	result = pfifo->data[pfifo->tail];
+	if(pfifo->tail != pfifo->head)
+		pfifo->tail = FIFO_INC(pfifo->tail);
+	vos_unlock_mutex(&pfifo->mutex);	
+	return result;
+}
+		
 //
 // FUNCTION PROTOTYPES
 //
 void Setup();
 void RunHostPort(HOST_PORT_DATA *pHostData);
-void RunSPISlave();
+void RunSPISend();
+void RunSPIReceive();
+void RunSPIEcho();
 
+	
+FIFO_TYPE stSPIReadFIFO;
+FIFO_TYPE stSPIWriteFIFO;
+	
 //////////////////////////////////////////////////////////////////////
 //
 // IOMUX SETUP
@@ -99,9 +151,9 @@ void setGpioA(uint8 mask, uint8 data)
 //////////////////////////////////////////////////////////////////////
 void main(void)
 {
-	usbhost_context_t usbhostContext;
-	gpio_context_t gpioCtx;
-	//spislave_context_t spiSlaveContext;
+//	usbhost_context_t usbhostContext;
+//	gpio_context_t gpioCtx;
+	spislave_context_t spiSlaveContext;
 
 	// Kernel initialisation
 	vos_init(50, VOS_TICK_INTERVAL, VOS_NUMBER_DEVICES);
@@ -111,25 +163,25 @@ void main(void)
 	// Set up the io multiplexing
 	iomux_setup();
 
-	//spiSlaveContext.slavenumber = SPI_SLAVE_0;
-	//spiSlaveContext.buffer_size = 64;
-	//spislave_init(VOS_DEV_SPISLAVE, &spiSlaveContext);
+	spiSlaveContext.slavenumber = SPI_SLAVE_0;
+	spiSlaveContext.buffer_size = 64;
+	spislave_init(VOS_DEV_SPISLAVE, &spiSlaveContext);
 	
 	// Initialise GPIO port A
-	gpioCtx.port_identifier = GPIO_PORT_A;
-	gpio_init(VOS_DEV_GPIO_A,&gpioCtx); 
+//	gpioCtx.port_identifier = GPIO_PORT_A;
+//	gpio_init(VOS_DEV_GPIO_A,&gpioCtx); 
 	
 	// Initialise USB Host devices
-	usbhostContext.if_count = 8;
-	usbhostContext.ep_count = 16;
-	usbhostContext.xfer_count = 2;
-	usbhostContext.iso_xfer_count = 2;
-	usbhost_init(VOS_DEV_USBHOST_1, VOS_DEV_USBHOST_2, &usbhostContext);
+//	usbhostContext.if_count = 8;
+//	usbhostContext.ep_count = 16;
+//	usbhostContext.xfer_count = 2;
+//	usbhostContext.iso_xfer_count = 2;
+//	usbhost_init(VOS_DEV_USBHOST_1, VOS_DEV_USBHOST_2, &usbhostContext);
 	
 
 	// Initialise the USB function device
-	usbhostGeneric_init(VOS_DEV_USBHOSTGENERIC_1);
-	usbhostGeneric_init(VOS_DEV_USBHOSTGENERIC_2);
+//	usbhostGeneric_init(VOS_DEV_USBHOSTGENERIC_1);
+//	usbhostGeneric_init(VOS_DEV_USBHOSTGENERIC_2);
 
 	PortA.uchActivityLed = LED_USB_A;
 	PortA.uchChannel = 0;
@@ -141,13 +193,18 @@ void main(void)
 	PortB.uchDeviceNumberBase = VOS_DEV_USBHOST_2;
 	PortB.uchDeviceNumber = VOS_DEV_USBHOSTGENERIC_2;
 	
+
+	fifo_init(&stSPIReadFIFO);
+	fifo_init(&stSPIWriteFIFO);
 	
 	// Initializes our device with the device manager.
 	
 	tcbSetup = vos_create_thread_ex(10, 1024, Setup, "Setup", 0);
-	tcbHostA = vos_create_thread_ex(20, 1024, RunHostPort, "RunHostPortA", sizeof(HOST_PORT_DATA*), &PortA);
-	tcbHostB = vos_create_thread_ex(20, 1024, RunHostPort, "RunHostPortB", sizeof(HOST_PORT_DATA*), &PortB);
-//	tcbSPISlave = vos_create_thread_ex(15, 1024, RunSPISlave, "RunSPISlave", 0);
+//	tcbHostA = vos_create_thread_ex(20, 1024, RunHostPort, "RunHostPortA", sizeof(HOST_PORT_DATA*), &PortA);
+//	tcbHostB = vos_create_thread_ex(20, 1024, RunHostPort, "RunHostPortB", sizeof(HOST_PORT_DATA*), &PortB);
+	tcbSPISlave = vos_create_thread_ex(20, 1024, RunSPISend, "RunSPISend", 0);
+	tcbSPISlave = vos_create_thread_ex(20, 1024, RunSPIReceive, "RunSPIReceive", 0);
+	tcbSPISlave = vos_create_thread_ex(20, 1024, RunSPIEcho, "RunSPIEcho", 0);
 
 	vos_init_semaphore(&setupSem,0);
 	
@@ -172,17 +229,17 @@ void Setup()
 	unsigned char uchLeds;
 	common_ioctl_cb_t ss_iocb;
 
-	//hSPISlave = vos_dev_open(VOS_DEV_SPISLAVE);
+	hSPISlave = vos_dev_open(VOS_DEV_SPISLAVE);
 	
 	// Open up the base level drivers
-	hGpioA  	= vos_dev_open(VOS_DEV_GPIO_A);
+//	hGpioA  	= vos_dev_open(VOS_DEV_GPIO_A);
 	
 
-	gpio_iocb.ioctl_code = VOS_IOCTL_GPIO_SET_MASK;
-	gpio_iocb.value = 0b11000110;
-	vos_dev_ioctl(hGpioA, &gpio_iocb);
-	setGpioA(0b11000110,0);
-/*
+//	gpio_iocb.ioctl_code = VOS_IOCTL_GPIO_SET_MASK;
+//	gpio_iocb.value = 0b11000110;
+//	vos_dev_ioctl(hGpioA, &gpio_iocb);
+//	setGpioA(0b11000110,0);
+
 	ss_iocb.ioctl_code = VOS_IOCTL_SPI_SLAVE_SCK_CPHA;
 	ss_iocb.set.param = SPI_SLAVE_SCK_CPHA_0;
 	vos_dev_ioctl(hSPISlave, &ss_iocb);
@@ -196,15 +253,17 @@ void Setup()
 	vos_dev_ioctl(hSPISlave, &ss_iocb);
 	
 	ss_iocb.ioctl_code = VOS_IOCTL_SPI_SLAVE_SET_MODE;
-	ss_iocb.set.param = SPI_SLAVE_MODE_UNMANAGED;
+	ss_iocb.set.param = SPI_SLAVE_MODE_FULL_DUPLEX;
 	vos_dev_ioctl(hSPISlave, &ss_iocb);
 
+	ss_iocb.ioctl_code = VOS_IOCTL_SPI_SLAVE_SET_ADDRESS;
+	ss_iocb.set.param = 0;
+	vos_dev_ioctl(hSPISlave, &ss_iocb);
 
 	ss_iocb.ioctl_code = VOS_IOCTL_COMMON_ENABLE_DMA;
-	ss_iocb.set.param = DMA_ACQUIRE_AS_REQUIRED;
+	ss_iocb.set.param = DMA_ACQUIRE_AND_RETAIN;
 	vos_dev_ioctl(hSPISlave, &ss_iocb);
-
-	*/
+	
 	// Release other application threads
 	vos_signal_semaphore(&setupSem);
 }
@@ -307,7 +366,7 @@ void RunHostPort(HOST_PORT_DATA *pHostData)
 						status = vos_dev_read(pHostData->hUSBHOSTGENERIC, buf, 64, &num_bytes);
 						if(status != USBHOSTGENERIC_OK)
 							break;
-						vos_dev_write(pHostData->hUSBHOSTGENERIC, buf, num_bytes, &num_bytes);
+//						vos_dev_write(pHostData->hUSBHOSTGENERIC, buf, num_bytes, &num_bytes);
 						
 /*							
 						setGpioA(pHostData->uchActivityLed, 0);
@@ -379,58 +438,61 @@ void SPISlave()
 // THREAD TO RUN THE SPI INTERFACE
 //
 ////////////////////////////////////////////////////////////////////
-void RunSPISlave()
+void RunSPIReceive()
 {
-	uint8 buf[4];
-	uint16 num_bytes;
-	uint16 status;
-	int iPutPos = 5;
-
+	unsigned short bytes_read;
+	uint32 msg;
+	
 	// wait for setup to complete
 	vos_wait_semaphore(&setupSem);
 	vos_signal_semaphore(&setupSem);
-	
 
-	// byte 1 is usb port number
-	// byte 2 is midi command or 0 for none
-	// byte 3 is midi param 1
-	// byte 4 is midi param 2
-	
-	for(;;)
+	while(1)
 	{
-		uint8 ch;
-		status = vos_dev_read(hSPISlave, &ch, 1, &num_bytes);				
-		if(0 == status)
-		{
-			if(ch == 0xff)
-			{
-				iPutPos = 0;
-			}
-			else if(iPutPos < 4)
-			{
-				buf[iPutPos++] = ch;
-				if(iPutPos == 4)
-				{
-					setGpioA(LED_ACTIVITY, LED_ACTIVITY);
-					if(buf[0] == 1)
-					{
-						if(buf[1])
-							vos_dev_write(PortB.hUSBHOSTGENERIC, &buf[1], 3, &num_bytes);
-						else
-							vos_dev_write(PortB.hUSBHOSTGENERIC, &buf[2], 2, &num_bytes);
-					}
-					else 
-					{
-						if(buf[1])
-							vos_dev_write(PortA.hUSBHOSTGENERIC, &buf[1], 3, &num_bytes);
-						else
-							vos_dev_write(PortA.hUSBHOSTGENERIC, &buf[2], 2, &num_bytes);
-					}
-					setGpioA(LED_ACTIVITY, 0);
-				}
-			}
-		}
+		if(0==vos_dev_read(hSPISlave, (char*)&msg, 4, &bytes_read))
+			fifo_write(&stSPIReadFIFO, msg);
 	}
 }
 
+////////////////////////////////////////////////////////////////////
+//	
+// THREAD TO RUN THE SPI INTERFACE
+//
+////////////////////////////////////////////////////////////////////
+void RunSPISend()
+{
+	unsigned short bytes_written;
+	uint32 msg;
 	
+	// wait for setup to complete
+	vos_wait_semaphore(&setupSem);
+	vos_signal_semaphore(&setupSem);
+
+	while(1)
+	{
+		// wait for there to be some data available to send
+		msg = fifo_read(&stSPIWriteFIFO);
+		vos_dev_write(hSPISlave, (char*)&msg, 4, &bytes_written);
+	}
+}
+	
+////////////////////////////////////////////////////////////////////
+//	
+// THREAD TO RUN THE SPI INTERFACE
+//
+////////////////////////////////////////////////////////////////////
+void RunSPIEcho()
+{
+	uint32 msg;
+	
+	
+	vos_wait_semaphore(&setupSem);
+	vos_signal_semaphore(&setupSem);
+
+	while(1)
+	{
+		msg = fifo_read(&stSPIReadFIFO);
+		fifo_write(&stSPIWriteFIFO, msg);
+		
+	}
+}
