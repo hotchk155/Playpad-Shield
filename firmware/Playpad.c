@@ -31,6 +31,8 @@ typedef struct {
 	unsigned char uchDeviceNumber;
 	unsigned char uchActivityLed;
 	unsigned char uchChannel;
+	vos_mutex_t mutex;	
+	uint8 enabled;
 } HOST_PORT_DATA;
 	
 unsigned char buf[512];
@@ -102,7 +104,7 @@ void RunHostPort(HOST_PORT_DATA *pHostData);
 void RunSPISend();
 void RunSPIReceive();
 void RunSPIEcho();
-
+void RunWriteLaunchpad();
 	
 FIFO_TYPE stSPIReadFIFO;
 FIFO_TYPE stSPIWriteFIFO;
@@ -151,8 +153,8 @@ void setGpioA(uint8 mask, uint8 data)
 //////////////////////////////////////////////////////////////////////
 void main(void)
 {
-//	usbhost_context_t usbhostContext;
-//	gpio_context_t gpioCtx;
+	usbhost_context_t usbhostContext;
+	gpio_context_t gpioCtx;
 	spislave_context_t spiSlaveContext;
 
 	// Kernel initialisation
@@ -168,30 +170,34 @@ void main(void)
 	spislave_init(VOS_DEV_SPISLAVE, &spiSlaveContext);
 	
 	// Initialise GPIO port A
-//	gpioCtx.port_identifier = GPIO_PORT_A;
-//	gpio_init(VOS_DEV_GPIO_A,&gpioCtx); 
+	gpioCtx.port_identifier = GPIO_PORT_A;
+	gpio_init(VOS_DEV_GPIO_A,&gpioCtx); 
 	
 	// Initialise USB Host devices
-//	usbhostContext.if_count = 8;
-//	usbhostContext.ep_count = 16;
-//	usbhostContext.xfer_count = 2;
-//	usbhostContext.iso_xfer_count = 2;
-//	usbhost_init(VOS_DEV_USBHOST_1, VOS_DEV_USBHOST_2, &usbhostContext);
+	usbhostContext.if_count = 8;
+	usbhostContext.ep_count = 16;
+	usbhostContext.xfer_count = 2;
+	usbhostContext.iso_xfer_count = 2;
+	usbhost_init(VOS_DEV_USBHOST_1, VOS_DEV_USBHOST_2, &usbhostContext);
 	
 
 	// Initialise the USB function device
-//	usbhostGeneric_init(VOS_DEV_USBHOSTGENERIC_1);
-//	usbhostGeneric_init(VOS_DEV_USBHOSTGENERIC_2);
+	usbhostGeneric_init(VOS_DEV_USBHOSTGENERIC_1);
+	usbhostGeneric_init(VOS_DEV_USBHOSTGENERIC_2);
 
 	PortA.uchActivityLed = LED_USB_A;
 	PortA.uchChannel = 0;
 	PortA.uchDeviceNumberBase = VOS_DEV_USBHOST_1;
 	PortA.uchDeviceNumber = VOS_DEV_USBHOSTGENERIC_1;
+	PortA.enabled = 0;
+	vos_init_mutex(&PortA.mutex, VOS_MUTEX_UNLOCKED);
 	
 	PortB.uchActivityLed = LED_USB_B;
 	PortB.uchChannel = 1;
 	PortB.uchDeviceNumberBase = VOS_DEV_USBHOST_2;
 	PortB.uchDeviceNumber = VOS_DEV_USBHOSTGENERIC_2;
+	PortB.enabled = 0;
+	vos_init_mutex(&PortB.mutex, VOS_MUTEX_UNLOCKED);
 	
 
 	fifo_init(&stSPIReadFIFO);
@@ -200,11 +206,13 @@ void main(void)
 	// Initializes our device with the device manager.
 	
 	tcbSetup = vos_create_thread_ex(10, 1024, Setup, "Setup", 0);
-//	tcbHostA = vos_create_thread_ex(20, 1024, RunHostPort, "RunHostPortA", sizeof(HOST_PORT_DATA*), &PortA);
-//	tcbHostB = vos_create_thread_ex(20, 1024, RunHostPort, "RunHostPortB", sizeof(HOST_PORT_DATA*), &PortB);
+	tcbHostA = vos_create_thread_ex(20, 1024, RunHostPort, "RunHostPortA", sizeof(HOST_PORT_DATA*), &PortA);
+	tcbHostB = vos_create_thread_ex(20, 1024, RunHostPort, "RunHostPortB", sizeof(HOST_PORT_DATA*), &PortB);
 	tcbSPISlave = vos_create_thread_ex(20, 1024, RunSPISend, "RunSPISend", 0);
 	tcbSPISlave = vos_create_thread_ex(20, 1024, RunSPIReceive, "RunSPIReceive", 0);
-	tcbSPISlave = vos_create_thread_ex(20, 1024, RunSPIEcho, "RunSPIEcho", 0);
+	
+	tcbSPISlave = vos_create_thread_ex(21, 1024, RunWriteLaunchpad, "RunWriteLaunchpad", 0);
+//	tcbSPISlave = vos_create_thread_ex(20, 1024, RunSPIEcho, "RunSPIEcho", 0);
 
 	vos_init_semaphore(&setupSem,0);
 	
@@ -232,13 +240,13 @@ void Setup()
 	hSPISlave = vos_dev_open(VOS_DEV_SPISLAVE);
 	
 	// Open up the base level drivers
-//	hGpioA  	= vos_dev_open(VOS_DEV_GPIO_A);
+	hGpioA  	= vos_dev_open(VOS_DEV_GPIO_A);
 	
 
-//	gpio_iocb.ioctl_code = VOS_IOCTL_GPIO_SET_MASK;
-//	gpio_iocb.value = 0b11000110;
-//	vos_dev_ioctl(hGpioA, &gpio_iocb);
-//	setGpioA(0b11000110,0);
+	gpio_iocb.ioctl_code = VOS_IOCTL_GPIO_SET_MASK;
+	gpio_iocb.value = 0b11000110;
+	vos_dev_ioctl(hGpioA, &gpio_iocb);
+	setGpioA(0b11000110,0);
 
 	ss_iocb.ioctl_code = VOS_IOCTL_SPI_SLAVE_SCK_CPHA;
 	ss_iocb.set.param = SPI_SLAVE_SCK_CPHA_0;
@@ -353,49 +361,55 @@ void RunHostPort(HOST_PORT_DATA *pHostData)
 				generic_iocb.set.att = &genericAtt;
 				if (vos_dev_ioctl(pHostData->hUSBHOSTGENERIC, &generic_iocb) == USBHOSTGENERIC_OK)
 				{
+					int midiParam = 0;
+					int i;
+					msg[0] = 1;//pHostData->uchChannel;
+					msg[1] = 0;
+					
+					vos_lock_mutex(&pHostData->mutex);
+					pHostData->enabled = 1;
+					vos_unlock_mutex(&pHostData->mutex);
+					
 					// Turn on the LED for this port
 					setGpioA(pHostData->uchActivityLed, pHostData->uchActivityLed);
 					
 					// now we loop until the launchpad is detached
 					while(1)
 					{
-						int pos = 0;
-						byte param = 1;
-						
-						// receiving data from the launchpad
-						status = vos_dev_read(pHostData->hUSBHOSTGENERIC, buf, 64, &num_bytes);
-						if(status != USBHOSTGENERIC_OK)
+						// listen for data from launchpad
+						if(0 != vos_dev_read(pHostData->hUSBHOSTGENERIC, buf, 64, &num_bytes))
 							break;
-//						vos_dev_write(pHostData->hUSBHOSTGENERIC, buf, num_bytes, &num_bytes);
-						
-/*							
-						setGpioA(pHostData->uchActivityLed, 0);
-						setGpioA(LED_SIGNAL,LED_SIGNAL);
-
-						// prepare to pass the data to SPI slave
-						msg[0] = pHostData->uchChannel;
-						if(buf[0]&0x80)
+							
+						// interpret MIDI messages into 4 byte messages to pass to Arduino
+						for(i=0;i<num_bytes;++i)
 						{
-							msg[1] = buf[0];
-							msg[2] = buf[1];
-							msg[3] = buf[2];
+							if(buf[i]&0x80)
+							{
+								msg[1] = buf[i];
+								midiParam = 0;
+							}
+							else if(midiParam == 0)
+							{
+								msg[2] = buf[i];
+								midiParam = 1;
+							}
+							else
+							{
+								msg[3] = buf[i];
+								if(msg[1])
+									fifo_write(&stSPIWriteFIFO, *((uint32*)msg));
+								midiParam = 0;
+							}
 						}
-						else
-						{
-							msg[1] = 0;
-							msg[2] = buf[0];
-							msg[3] = buf[1];
-						}							
-						status = vos_dev_write(hSPISlave, msg, 4, &num_bytes);		
-						setGpioA(LED_SIGNAL,0);
-						
-						setGpioA(pHostData->uchActivityLed, pHostData->uchActivityLed);
-*/						
 					}					
-					// Turn off the LED
+					vos_lock_mutex(&pHostData->mutex);
+					pHostData->enabled = 0;
+					vos_unlock_mutex(&pHostData->mutex);
+					
 					setGpioA(pHostData->uchActivityLed, 0);
 				}
 				vos_dev_close(pHostData->hUSBHOSTGENERIC);
+				pHostData->hUSBHOSTGENERIC = NULL;
 			}
 		}
 	}
@@ -449,7 +463,7 @@ void RunSPIReceive()
 
 	while(1)
 	{
-		if(0==vos_dev_read(hSPISlave, (char*)&msg, 4, &bytes_read))
+		if(0==vos_dev_read(hSPISlave, (char*)&msg, 4, &bytes_read))		
 			fifo_write(&stSPIReadFIFO, msg);
 	}
 }
@@ -481,18 +495,29 @@ void RunSPISend()
 // THREAD TO RUN THE SPI INTERFACE
 //
 ////////////////////////////////////////////////////////////////////
-void RunSPIEcho()
+void RunWriteLaunchpad()
 {
+	uint8 enabled;
 	uint32 msg;
-	
-	
+	unsigned short bytes_written;
+	char *p;
+		
 	vos_wait_semaphore(&setupSem);
 	vos_signal_semaphore(&setupSem);
 
 	while(1)
 	{
 		msg = fifo_read(&stSPIReadFIFO);
-		fifo_write(&stSPIWriteFIFO, msg);
-		
+		p=(char*)&msg;
+		if(p[0]==1)
+		{
+			vos_lock_mutex(&PortA.mutex);
+			enabled = PortA.enabled;
+			vos_unlock_mutex(&PortA.mutex);
+			if(enabled)
+			{
+				vos_dev_write(PortA.hUSBHOSTGENERIC, p+1, 3, &bytes_written);
+			}		
+		}		
 	}
 }

@@ -483,7 +483,7 @@
    <member name="data" offset="0" size="16"
     basetype="CHAR" baseattr="unsigned,ptr,"/>
   </struct>
-  <struct name="__unnamed_struct_9" line="34" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+  <struct name="__unnamed_struct_9" line="36" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
    <member name="hUSBHOST" offset="0" size="16"
     basetype="SHORT" baseattr="unsigned,"/>
    <member name="hUSBHOSTGENERIC" offset="16" size="16"
@@ -496,6 +496,10 @@
     basetype="CHAR" baseattr="unsigned,"/>
    <member name="uchChannel" offset="56" size="8"
     basetype="CHAR" baseattr="unsigned,"/>
+   <member name="mutex" offset="64" size="48"
+    basename="_vos_mutex_t" basetype="STRUCT" baseattr=""/>
+   <member name="enabled" offset="112" size="8"
+    basetype="CHAR" baseattr="unsigned,"/>
   </struct>
   <struct name="_common_ioctl_cb_t" line="58" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\ioctl.h">
    <member name="ioctl_code" offset="0" size="8"
@@ -505,7 +509,7 @@
    <member name="get" offset="40" size="32"
     basename="__unnamed_struct_6" basetype="STRUCT" baseattr=""/>
   </struct>
-  <struct name="__unnamed_struct_10" line="60" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+  <struct name="__unnamed_struct_10" line="62" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
    <member name="data" offset="0" size="1600"
     basetype="INT" baseattr="unsigned," basearray="50,"/>
    <member name="head" offset="1600" size="8"
@@ -613,7 +617,7 @@
    basename="_vos_gpio_t" basetype="STRUCT" baseattr=""/>
   <typedef name="usbhost_ep_handle_ex" line="132" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\USBHost.h"
    basetype="INT" baseattr="signed,"/>
-  <struct name="HOST_PORT_DATA" line="34" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"    attr="" size="64">
+  <struct name="HOST_PORT_DATA" line="36" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"    attr="" size="120">
    <member name="hUSBHOST" offset="0" size="16"
     basetype="SHORT" baseattr="unsigned,"/>
    <member name="hUSBHOSTGENERIC" offset="16" size="16"
@@ -625,6 +629,10 @@
    <member name="uchActivityLed" offset="48" size="8"
     basetype="CHAR" baseattr="unsigned,"/>
    <member name="uchChannel" offset="56" size="8"
+    basetype="CHAR" baseattr="unsigned,"/>
+   <member name="mutex" offset="64" size="48"
+    basename="_vos_mutex_t" basetype="STRUCT" baseattr=""/>
+   <member name="enabled" offset="112" size="8"
     basetype="CHAR" baseattr="unsigned,"/>
   </struct>
   <typedef name="vos_semaphore_list_t" line="156" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\vos.h"
@@ -707,7 +715,7 @@
    basename="_usbhost_ioctl_cb_vid_pid_t" basetype="STRUCT" baseattr=""/>
   <typedef name="usbhost_ioctl_cb_ep_info_t" line="333" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\drivers\include\USBHost.h"
    basename="_usbhost_ioctl_cb_ep_info_t" basetype="STRUCT" baseattr=""/>
-  <struct name="FIFO_TYPE" line="60" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"    attr="" size="1704">
+  <struct name="FIFO_TYPE" line="62" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"    attr="" size="1704">
    <member name="data" offset="0" size="1600"
     basetype="INT" baseattr="unsigned," basearray="50,"/>
    <member name="head" offset="1600" size="8"
@@ -738,66 +746,51 @@
    basename="_spislave_context_t" basetype="STRUCT" baseattr=""/>
   <typedef name="vos_tcb_t" line="95" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\vos.h"
    basename="_vos_tcb_t" basetype="STRUCT" baseattr=""/>
-  <label name="main_loop" line="214" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"/>  <proto name="fifo_write" line="71" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <label name="main_loop" line="222" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"/>  <proto name="fifo_write" line="73" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    basetype="VOID" baseattr="">
-   <var name="pfifo" line="71" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   <var name="pfifo" line="73" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
     type="AUTO" storage="AUTO VAR" attr="param,"
     basename="__unnamed_struct_10" basetype="STRUCT" baseattr="ptr,"/>
-   <var name="value" line="71" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   <var name="value" line="73" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
     type="AUTO" storage="AUTO VAR" attr="param,"
     basetype="INT" baseattr="unsigned,"/>
   </proto>
-  <proto name="RunHostPort" line="309" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-   basetype="VOID" baseattr="">
-   <var name="pHostData" line="309" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-    type="AUTO" storage="AUTO VAR" attr="param,"
-    basename="__unnamed_struct_9" basetype="STRUCT" baseattr="ptr,"/>
-  </proto>
-  <proto name="iomux_setup" line="116" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <proto name="iomux_setup" line="118" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    basetype="VOID" baseattr="">
   </proto>
-  <proto name="usbhost_connect_state" line="288" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <proto name="usbhost_connect_state" line="296" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    basetype="CHAR" baseattr="unsigned,">
-   <var name="hUSB" line="288" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   <var name="hUSB" line="296" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
     type="AUTO" storage="AUTO VAR" attr="param,"
     basetype="SHORT" baseattr="unsigned,"/>
   </proto>
-  <proto name="RunSPIReceive" line="441" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <proto name="main" line="154" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    basetype="VOID" baseattr="">
   </proto>
-  <proto name="main" line="152" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <proto name="Setup" line="231" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    basetype="VOID" baseattr="">
   </proto>
-  <proto name="Setup" line="223" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-   basetype="VOID" baseattr="">
-  </proto>
-  <proto name="getGPIO" line="276" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <proto name="getGPIO" line="284" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    basetype="CHAR" baseattr="unsigned,">
   </proto>
-  <proto name="setGpioA" line="141" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <proto name="setGpioA" line="143" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    basetype="VOID" baseattr="">
-   <var name="mask" line="141" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   <var name="mask" line="143" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
     type="AUTO" storage="AUTO VAR" attr="param,"
     basetype="CHAR" baseattr="unsigned,"/>
-   <var name="data" line="141" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   <var name="data" line="143" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
     type="AUTO" storage="AUTO VAR" attr="param,"
     basetype="CHAR" baseattr="unsigned,"/>
   </proto>
-  <proto name="fifo_read" line="85" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <proto name="fifo_read" line="87" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    basetype="INT" baseattr="unsigned,">
-   <var name="pfifo" line="85" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   <var name="pfifo" line="87" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
     type="AUTO" storage="AUTO VAR" attr="param,"
     basename="__unnamed_struct_10" basetype="STRUCT" baseattr="ptr,"/>
   </proto>
-  <proto name="RunSPIEcho" line="484" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <proto name="fifo_init" line="66" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    basetype="VOID" baseattr="">
-  </proto>
-  <proto name="RunSPISend" line="462" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-   basetype="VOID" baseattr="">
-  </proto>
-  <proto name="fifo_init" line="64" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-   basetype="VOID" baseattr="">
-   <var name="pfifo" line="64" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   <var name="pfifo" line="66" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
     type="AUTO" storage="AUTO VAR" attr="param,"
     basename="__unnamed_struct_10" basetype="STRUCT" baseattr="ptr,"/>
   </proto>
@@ -939,6 +932,12 @@
     type="AUTO" storage="AUTO VAR" attr="param,"
     basetype="CHAR" baseattr="unsigned,"/>
   </proto>
+  <proto name="RunHostPort" line="317" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   basetype="VOID" baseattr="">
+   <var name="pHostData" line="317" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+    type="AUTO" storage="AUTO VAR" attr="param,"
+    basename="__unnamed_struct_9" basetype="STRUCT" baseattr="ptr,"/>
+  </proto>
   <proto name="vos_dma_get_fifo_data" line="84" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\dma.h"
    basetype="CHAR" baseattr="unsigned,">
    <var name="h" line="84" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\dma.h"
@@ -1037,6 +1036,9 @@
    <var name="mask" line="72" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\devman.h"
     type="AUTO" storage="AUTO VAR" attr="param,"
     basetype="INT" baseattr="unsigned,"/>
+  </proto>
+  <proto name="RunSPIReceive" line="105" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   basetype="VOID" baseattr="">
   </proto>
   <proto name="vos_dev_read" line="54" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\devman.h"
    basetype="CHAR" baseattr="unsigned,">
@@ -1479,6 +1481,9 @@
     type="AUTO" storage="AUTO VAR" attr="param,"
     basetype="SHORT" baseattr="unsigned,"/>
   </proto>
+  <proto name="RunWriteLaunchpad" line="107" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   basetype="VOID" baseattr="">
+  </proto>
   <proto name="vos_unlock_mutex" line="134" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\vos.h"
    basetype="VOID" baseattr="">
    <var name="m" line="134" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\vos.h"
@@ -1650,10 +1655,16 @@
     type="AUTO" storage="AUTO VAR" attr="param,"
     basetype="CHAR" baseattr="unsigned,"/>
   </proto>
+  <proto name="RunSPIEcho" line="106" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+   basetype="VOID" baseattr="">
+  </proto>
   <proto name="echo_done" line="58" file="Playpad.h"
    basetype="VOID" baseattr="">
   </proto>
   <proto name="vos_start_profiler" line="189" file="C:\Program Files (x86)\FTDI\Vinculum II Toolchain\Firmware\kernel\include\vos.h"
+   basetype="VOID" baseattr="">
+  </proto>
+  <proto name="RunSPISend" line="104" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    basetype="VOID" baseattr="">
   </proto>
   <proto name="echo_init" line="57" file="Playpad.h"
@@ -1692,267 +1703,147 @@
     type="AUTO" storage="AUTO VAR" attr="param,"
     basename="_vos_cond_var_t" basetype="STRUCT" baseattr="ptr,"/>
   </proto>
-  <var name="tcbSPISlave" line="17" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-   type="AUTO" storage="AUTO VAR" attr="global,"
-   basename="_vos_tcb_t" basetype="STRUCT" baseattr="ptr,"/>
-  <var name="stSPIReadFIFO" line="107" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-   type="AUTO" storage="AUTO VAR" attr="global,"
-   basename="__unnamed_struct_10" basetype="STRUCT" baseattr=""/>
-  <var name="gpioAOutput" line="42" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-   type="AUTO" storage="AUTO VAR" attr="global,"
-   basetype="CHAR" baseattr="unsigned,"/>
-  <var name="stSPIWriteFIFO" line="108" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-   type="AUTO" storage="AUTO VAR" attr="global,"
-   basename="__unnamed_struct_10" basetype="STRUCT" baseattr=""/>
-  <var name="buf" line="36" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-   type="AUTO" storage="AUTO VAR" attr="global,"
-   basetype="CHAR" baseattr="unsigned," basearray="512,"/>
-  <var name="pBuf" line="37" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-   type="AUTO" storage="AUTO VAR" attr="global,"
-   basetype="SHORT" baseattr="unsigned,"/>
-  <var name="PortA" line="40" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-   type="AUTO" storage="AUTO VAR" attr="global,"
-   basename="__unnamed_struct_9" basetype="STRUCT" baseattr=""/>
-  <var name="PortB" line="41" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-   type="AUTO" storage="AUTO VAR" attr="global,"
-   basename="__unnamed_struct_9" basetype="STRUCT" baseattr=""/>
-  <var name="hGpioA" line="21" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-   type="AUTO" storage="AUTO VAR" attr="global,"
-   basetype="SHORT" baseattr="unsigned,"/>
-  <var name="tcbHostA" line="15" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-   type="AUTO" storage="AUTO VAR" attr="global,"
-   basename="_vos_tcb_t" basetype="STRUCT" baseattr="ptr,"/>
-  <var name="tcbHostB" line="16" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-   type="AUTO" storage="AUTO VAR" attr="global,"
-   basename="_vos_tcb_t" basetype="STRUCT" baseattr="ptr,"/>
-  <var name="tcbSetup" line="14" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-   type="AUTO" storage="AUTO VAR" attr="global,"
-   basename="_vos_tcb_t" basetype="STRUCT" baseattr="ptr,"/>
-  <var name="hSPISlave" line="22" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-   type="AUTO" storage="AUTO VAR" attr="global,"
-   basetype="SHORT" baseattr="unsigned,"/>
-  <var name="setupSem" line="19" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-   type="AUTO" storage="AUTO VAR" attr="global,"
-   basename="_vos_semaphore_t" basetype="STRUCT" baseattr=""/>
- <function name="fifo_init" line="64" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
+ <function name="fifo_init" line="66" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
   basetype="VOID" baseattr="">
-  <var name="pfifo" line="64" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <var name="pfifo" line="66" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    type="AUTO" storage="AUTO VAR" attr="param,"
    basename="__unnamed_struct_10" basetype="STRUCT" baseattr="ptr,"/>
-  <block line="65" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-    <var name="pfifo" line="64" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <block line="67" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+    <var name="pfifo" line="66" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr="param,"
      basename="__unnamed_struct_10" basetype="STRUCT" baseattr="ptr,"/>
   </block>
  </function>
- <function name="fifo_write" line="71" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
+ <function name="fifo_write" line="73" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
   basetype="VOID" baseattr="">
-  <var name="pfifo" line="71" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <var name="pfifo" line="73" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    type="AUTO" storage="AUTO VAR" attr="param,"
    basename="__unnamed_struct_10" basetype="STRUCT" baseattr="ptr,"/>
-  <var name="value" line="71" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <var name="value" line="73" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    type="AUTO" storage="AUTO VAR" attr="param,"
    basetype="INT" baseattr="unsigned,"/>
-  <block line="72" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-    <var name="pfifo" line="71" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <block line="74" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+    <var name="pfifo" line="73" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr="param,"
      basename="__unnamed_struct_10" basetype="STRUCT" baseattr="ptr,"/>
-    <var name="value" line="71" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+    <var name="value" line="73" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr="param,"
      basetype="INT" baseattr="unsigned,"/>
-    <var name="nextHead" line="73" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+    <var name="nextHead" line="75" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr=""
      basetype="CHAR" baseattr="unsigned,"/>
-   <block line="76" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+   <block line="78" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
    </block>
   </block>
  </function>
- <function name="fifo_read" line="85" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
+ <function name="fifo_read" line="87" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
   basetype="INT" baseattr="unsigned,">
-  <var name="pfifo" line="85" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <var name="pfifo" line="87" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    type="AUTO" storage="AUTO VAR" attr="param,"
    basename="__unnamed_struct_10" basetype="STRUCT" baseattr="ptr,"/>
-  <block line="86" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-    <var name="pfifo" line="85" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <block line="88" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+    <var name="pfifo" line="87" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr="param,"
      basename="__unnamed_struct_10" basetype="STRUCT" baseattr="ptr,"/>
-    <var name="result" line="87" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+    <var name="result" line="89" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr=""
      basetype="INT" baseattr="unsigned,"/>
   </block>
  </function>
- <function name="iomux_setup" line="116" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
+ <function name="iomux_setup" line="118" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
   basetype="VOID" baseattr="">
-  <block line="117" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+  <block line="119" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
   </block>
  </function>
- <function name="setGpioA" line="141" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
+ <function name="setGpioA" line="143" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
   basetype="VOID" baseattr="">
-  <var name="mask" line="141" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <var name="mask" line="143" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    type="AUTO" storage="AUTO VAR" attr="param,"
    basetype="CHAR" baseattr="unsigned,"/>
-  <var name="data" line="141" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <var name="data" line="143" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    type="AUTO" storage="AUTO VAR" attr="param,"
    basetype="CHAR" baseattr="unsigned,"/>
-  <block line="142" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-    <var name="data" line="141" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <block line="144" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+    <var name="data" line="143" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr="param,"
      basetype="CHAR" baseattr="unsigned,"/>
-    <var name="mask" line="141" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+    <var name="mask" line="143" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr="param,"
      basetype="CHAR" baseattr="unsigned,"/>
   </block>
  </function>
- <function name="main" line="152" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
+ <function name="main" line="154" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
   basetype="VOID" baseattr="">
-  <block line="153" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-    <var name="spiSlaveContext" line="156" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <block line="155" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+    <var name="gpioCtx" line="157" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basename="_gpio_context_t" basetype="STRUCT" baseattr=""/>
+    <var name="spiSlaveContext" line="158" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr=""
      basename="_spislave_context_t" basetype="STRUCT" baseattr=""/>
+    <var name="usbhostContext" line="156" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+     type="AUTO" storage="AUTO VAR" attr=""
+     basename="_usbhost_context_t" basetype="STRUCT" baseattr=""/>
   </block>
  </function>
- <function name="Setup" line="223" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
+ <function name="Setup" line="231" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
   basetype="VOID" baseattr="">
-  <block line="224" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-    <var name="uchLeds" line="229" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <block line="232" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+    <var name="uchLeds" line="237" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr=""
      basetype="CHAR" baseattr="unsigned,"/>
-    <var name="generic_iocb" line="226" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+    <var name="generic_iocb" line="234" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr=""
      basename="_usbhostGeneric_ioctl_t" basetype="STRUCT" baseattr=""/>
-    <var name="ss_iocb" line="230" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+    <var name="ss_iocb" line="238" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr=""
      basename="_common_ioctl_cb_t" basetype="STRUCT" baseattr=""/>
-    <var name="gpio_iocb" line="227" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+    <var name="gpio_iocb" line="235" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr=""
      basename="_gpio_ioctl_cb_t" basetype="STRUCT" baseattr=""/>
-    <var name="uart_iocb" line="228" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+    <var name="uart_iocb" line="236" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr=""
      basename="_common_ioctl_cb_t" basetype="STRUCT" baseattr=""/>
-    <var name="spis_iocb" line="225" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+    <var name="spis_iocb" line="233" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr=""
      basename="_common_ioctl_cb_t" basetype="STRUCT" baseattr=""/>
   </block>
  </function>
- <function name="getGPIO" line="276" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
+ <function name="getGPIO" line="284" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
   basetype="CHAR" baseattr="unsigned,">
-  <block line="277" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-    <var name="gpio" line="278" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <block line="285" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+    <var name="gpio" line="286" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr=""
      basetype="CHAR" baseattr="unsigned,"/>
   </block>
  </function>
- <function name="usbhost_connect_state" line="288" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
+ <function name="usbhost_connect_state" line="296" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
   basetype="CHAR" baseattr="unsigned,">
-  <var name="hUSB" line="288" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <var name="hUSB" line="296" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
    type="AUTO" storage="AUTO VAR" attr="param,"
    basetype="SHORT" baseattr="unsigned,"/>
-  <block line="289" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-    <var name="hc_iocb" line="291" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+  <block line="297" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+    <var name="hc_iocb" line="299" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr=""
      basename="_usbhost_ioctl_cb_t" basetype="STRUCT" baseattr=""/>
-    <var name="connectstate" line="290" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+    <var name="connectstate" line="298" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr=""
      basetype="CHAR" baseattr="unsigned,"/>
-    <var name="hUSB" line="288" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
+    <var name="hUSB" line="296" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
      type="AUTO" storage="AUTO VAR" attr="param,"
      basetype="SHORT" baseattr="unsigned,"/>
-   <block line="293" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+   <block line="301" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
    </block>
   </block>
  </function>
- <function name="RunHostPort" line="309" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
+ <function name="RunHostPort" line="317" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
   basetype="VOID" baseattr="">
-  <block line="310" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-    <var name="hc_iocb_vid_pid" line="320" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basename="_usbhost_ioctl_cb_vid_pid_t" basetype="STRUCT" baseattr=""/>
-    <var name="genericAtt" line="317" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basename="_usbhostGeneric_ioctl_cb_attach_t" basetype="STRUCT" baseattr=""/>
-    <var name="hc_iocb" line="319" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basename="_usbhost_ioctl_cb_t" basetype="STRUCT" baseattr=""/>
-    <var name="msg" line="313" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basetype="CHAR" baseattr="unsigned," basearray="4,"/>
-    <var name="pHostData" line="309" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-     type="AUTO" storage="AUTO VAR" attr="param,"
-     basename="__unnamed_struct_9" basetype="STRUCT" baseattr="ptr,"/>
-    <var name="num_bytes" line="314" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basetype="SHORT" baseattr="unsigned,"/>
-    <var name="generic_iocb" line="316" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basename="_usbhostGeneric_ioctl_t" basetype="STRUCT" baseattr=""/>
-    <var name="status" line="311" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basetype="CHAR" baseattr="unsigned,"/>
-    <var name="gpio_iocb" line="321" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basename="_gpio_ioctl_cb_t" basetype="STRUCT" baseattr=""/>
-    <var name="handle" line="315" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basetype="INT" baseattr="unsigned,"/>
-    <var name="ifDev" line="318" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basetype="INT" baseattr="signed,"/>
-    <var name="buf" line="312" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basetype="CHAR" baseattr="unsigned," basearray="64,"/>
-   <block line="332" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-    <block line="334" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-     <block line="341" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-      <block line="354" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-       <block line="361" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-         <var name="param" line="363" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-          type="AUTO" storage="AUTO VAR" attr=""
-          basetype="CHAR" baseattr="unsigned,"/>
-         <var name="pos" line="362" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-          type="AUTO" storage="AUTO VAR" attr=""
-          basetype="INT" baseattr="signed,"/>
-       </block>
-      </block>
-     </block>
-    </block>
+ </function>
+ <block line="362" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+  <block line="373" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
+   <block line="376" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
    </block>
   </block>
- </function>
- <function name="RunSPIReceive" line="441" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
-  basetype="VOID" baseattr="">
-  <block line="442" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-    <var name="msg" line="444" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basetype="INT" baseattr="unsigned,"/>
-    <var name="bytes_read" line="443" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basetype="SHORT" baseattr="unsigned,"/>
-   <block line="451" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-   </block>
-  </block>
- </function>
- <function name="RunSPISend" line="462" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
-  basetype="VOID" baseattr="">
-  <block line="463" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-    <var name="msg" line="465" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basetype="INT" baseattr="unsigned,"/>
-    <var name="bytes_written" line="464" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basetype="SHORT" baseattr="unsigned,"/>
-   <block line="472" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-   </block>
-  </block>
- </function>
- <function name="RunSPIEcho" line="484" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c" 
-  basetype="VOID" baseattr="">
-  <block line="485" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-    <var name="msg" line="486" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c"
-     type="AUTO" storage="AUTO VAR" attr=""
-     basetype="INT" baseattr="unsigned,"/>
-   <block line="493" file="C:\Dev\GitHub\Playpad-Shield\firmware\Playpad.c">
-   </block>
-  </block>
- </function>
+ </block>
  </file>
 </VinTag>
