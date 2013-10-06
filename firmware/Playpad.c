@@ -14,12 +14,13 @@
 vos_tcb_t *tcbSetup;
 vos_tcb_t *tcbHostA;
 vos_tcb_t *tcbHostB;
-vos_tcb_t *tcbSPISlave;
+vos_tcb_t *tcbRunSPISend;
+vos_tcb_t *tcbRunSPIReceive;
+vos_tcb_t *tcbRunUSBSend;
+
 
 vos_semaphore_t setupSem;
 
-VOS_HANDLE hGpioA;
-VOS_HANDLE hSPISlave;
 
 //
 // TYPE DEFS
@@ -30,15 +31,11 @@ typedef struct {
 	unsigned char uchDeviceNumberBase;
 	unsigned char uchDeviceNumber;
 	unsigned char uchActivityLed;
-	unsigned char uchChannel;
-	vos_mutex_t mutex;	
-	uint8 enabled;
+	unsigned char uchMsg;
 } HOST_PORT_DATA;
 	
-unsigned char buf[512];
-unsigned short pBuf = 0;
-
-
+VOS_HANDLE hGpioA;
+VOS_HANDLE hSPISlave;
 HOST_PORT_DATA PortA = {0};
 HOST_PORT_DATA PortB = {0};
 uint8 gpioAOutput = 0;
@@ -48,54 +45,60 @@ uint8 gpioAOutput = 0;
 #define LED_USB_B 0x02
 #define LED_USB_A 0x04
 
+void setGpioA(uint8 mask, uint8 data);
 	
-	
-#define SZ_FIFO 50
+////////////////////////////////////////////////////////////////////////////////
+//
+// SYNCRONISED CIRCULAR FIFO BUFFER OF 32-BIT MESSAGES
+//
+////////////////////////////////////////////////////////////////////////////////
 
-	
+#define SZ_FIFO 50	
 typedef struct {
 	uint32 data[SZ_FIFO];
 	uint8 head;
 	uint8 tail;
-	vos_mutex_t mutex;
-	vos_semaphore_t semaphore;
+	vos_semaphore_t semRead;
+	vos_semaphore_t semWrite;
 } FIFO_TYPE;
 	
 #define FIFO_INC(d) ((d)<SZ_FIFO-1)?(d+1):0
 	
+////////////////////////////////////////////////////////////////////////////////
 void fifo_init(FIFO_TYPE *pfifo)
 {
 	memset(pfifo, 0, sizeof(FIFO_TYPE));
-	vos_init_semaphore(&pfifo->semaphore, 0);
-	vos_init_mutex(&pfifo->mutex, VOS_MUTEX_UNLOCKED);
+	vos_init_semaphore(&pfifo->semRead, 0);
+	vos_init_semaphore(&pfifo->semWrite, SZ_FIFO);
 }
 	
-void fifo_write(FIFO_TYPE *pfifo, uint32 value)
-{
-	uint8 nextHead;
-	vos_lock_mutex(&pfifo->mutex);
-	nextHead = FIFO_INC(pfifo->head);
-	if(nextHead != pfifo->tail)
-	{
-		pfifo->data[pfifo->head] = value;
-		pfifo->head = nextHead;
-		vos_signal_semaphore(&pfifo->semaphore);
-	}
-	vos_unlock_mutex(&pfifo->mutex);	
+////////////////////////////////////////////////////////////////////////////////
+void fifo_write(FIFO_TYPE *pfifo, uint8 *pmsg)
+{	
+	vos_wait_semaphore(&pfifo->semWrite);	// wait until we have space for the write
+	VOS_ENTER_CRITICAL_SECTION;				
+	pfifo->data[pfifo->head] = *((uint32*)pmsg); // write the message to FIFO to head pos
+	pfifo->head = FIFO_INC(pfifo->head);	// advance head position
+	VOS_EXIT_CRITICAL_SECTION;
+	vos_signal_semaphore(&pfifo->semRead);	// signal a message available
 }
 
-uint32 fifo_read(FIFO_TYPE *pfifo)
+////////////////////////////////////////////////////////////////////////////////
+uint32 fifo_read(FIFO_TYPE *pfifo, uint8 *pmsg)
 {
 	uint32 result;
-	vos_wait_semaphore(&pfifo->semaphore);	
-	vos_lock_mutex(&pfifo->mutex);
-	result = pfifo->data[pfifo->tail];
-	if(pfifo->tail != pfifo->head)
-		pfifo->tail = FIFO_INC(pfifo->tail);
-	vos_unlock_mutex(&pfifo->mutex);	
+	vos_wait_semaphore(&pfifo->semRead);	// wait until we have data to read
+	VOS_ENTER_CRITICAL_SECTION;
+	*((uint32*)pmsg) = pfifo->data[pfifo->tail];		// read value from tail position
+	pfifo->tail = FIFO_INC(pfifo->tail);	// advance tail position
+	VOS_EXIT_CRITICAL_SECTION;
+	vos_signal_semaphore(&pfifo->semWrite);	// signal space available to queue a message
 	return result;
 }
-		
+
+#define MSG_PORTA 0x40
+#define MSG_PORTB 0x80
+	
 //
 // FUNCTION PROTOTYPES
 //
@@ -103,8 +106,7 @@ void Setup();
 void RunHostPort(HOST_PORT_DATA *pHostData);
 void RunSPISend();
 void RunSPIReceive();
-void RunSPIEcho();
-void RunWriteLaunchpad();
+void RunUSBSend();
 	
 FIFO_TYPE stSPIReadFIFO;
 FIFO_TYPE stSPIWriteFIFO;
@@ -186,35 +188,28 @@ void main(void)
 	usbhostGeneric_init(VOS_DEV_USBHOSTGENERIC_2);
 
 	PortA.uchActivityLed = LED_USB_A;
-	PortA.uchChannel = 0;
+	PortA.uchMsg = MSG_PORTA;
 	PortA.uchDeviceNumberBase = VOS_DEV_USBHOST_1;
 	PortA.uchDeviceNumber = VOS_DEV_USBHOSTGENERIC_1;
-	PortA.enabled = 0;
-	vos_init_mutex(&PortA.mutex, VOS_MUTEX_UNLOCKED);
 	
 	PortB.uchActivityLed = LED_USB_B;
-	PortB.uchChannel = 1;
+	PortB.uchMsg = MSG_PORTB;
 	PortB.uchDeviceNumberBase = VOS_DEV_USBHOST_2;
 	PortB.uchDeviceNumber = VOS_DEV_USBHOSTGENERIC_2;
-	PortB.enabled = 0;
-	vos_init_mutex(&PortB.mutex, VOS_MUTEX_UNLOCKED);
 	
 
+	vos_init_semaphore(&setupSem,0);
 	fifo_init(&stSPIReadFIFO);
 	fifo_init(&stSPIWriteFIFO);
 	
-	// Initializes our device with the device manager.
 	
 	tcbSetup = vos_create_thread_ex(10, 1024, Setup, "Setup", 0);
 	tcbHostA = vos_create_thread_ex(20, 1024, RunHostPort, "RunHostPortA", sizeof(HOST_PORT_DATA*), &PortA);
 	tcbHostB = vos_create_thread_ex(20, 1024, RunHostPort, "RunHostPortB", sizeof(HOST_PORT_DATA*), &PortB);
-	tcbSPISlave = vos_create_thread_ex(20, 1024, RunSPISend, "RunSPISend", 0);
-	tcbSPISlave = vos_create_thread_ex(20, 1024, RunSPIReceive, "RunSPIReceive", 0);
-	
-	tcbSPISlave = vos_create_thread_ex(21, 1024, RunWriteLaunchpad, "RunWriteLaunchpad", 0);
-//	tcbSPISlave = vos_create_thread_ex(20, 1024, RunSPIEcho, "RunSPIEcho", 0);
+	tcbRunSPISend = vos_create_thread_ex(20, 1024, RunSPISend, "RunSPISend", 0);
+	tcbRunSPIReceive = vos_create_thread_ex(20, 1024, RunSPIReceive, "RunSPIReceive", 0);	
+	tcbRunUSBSend = vos_create_thread_ex(20, 1024, RunUSBSend, "RunUSBSend", 0);
 
-	vos_init_semaphore(&setupSem,0);
 	
 	// And start the thread
 	vos_start_scheduler();
@@ -316,6 +311,8 @@ unsigned char usbhost_connect_state(VOS_HANDLE hUSB)
 //////////////////////////////////////////////////////////////////////
 void RunHostPort(HOST_PORT_DATA *pHostData)
 {
+	int i;
+	int midiParam;
 	unsigned char status;
 	unsigned char buf[64];	
 	unsigned char msg[4];
@@ -327,13 +324,14 @@ void RunHostPort(HOST_PORT_DATA *pHostData)
 	usbhost_ioctl_cb_t hc_iocb;
 	usbhost_ioctl_cb_vid_pid_t hc_iocb_vid_pid;
 	gpio_ioctl_cb_t gpio_iocb;
+	VOS_HANDLE hUSB;
 
 	// wait for setup to complete
 	vos_wait_semaphore(&setupSem);
 	vos_signal_semaphore(&setupSem);
-
+	
+	// Open the base USB Host driver
 	pHostData->hUSBHOST = vos_dev_open(pHostData->uchDeviceNumberBase);
-
 	
 	// loop forever
 	while(1)
@@ -348,114 +346,93 @@ void RunHostPort(HOST_PORT_DATA *pHostData)
 			hc_iocb.get = &ifDev;
 			if (vos_dev_ioctl(pHostData->hUSBHOST, &hc_iocb) == USBHOST_OK)
 			{
-
+				// query the device VID/PID
 				hc_iocb.ioctl_code = VOS_IOCTL_USBHOST_DEVICE_GET_VID_PID;
 				hc_iocb.handle.dif = ifDev;
 				hc_iocb.get = &hc_iocb_vid_pid;
 				
-				// attach the Launchpad device to the USB host device
-				pHostData->hUSBHOSTGENERIC = vos_dev_open(pHostData->uchDeviceNumber);
+				// Load the function driver
+				hUSB = vos_dev_open(pHostData->uchDeviceNumber);
+				
+				// Attach the function driver to the base driver
 				genericAtt.hc_handle = pHostData->hUSBHOST;
 				genericAtt.ifDev = ifDev;
 				generic_iocb.ioctl_code = VOS_IOCTL_USBHOSTGENERIC_ATTACH;
 				generic_iocb.set.att = &genericAtt;
-				if (vos_dev_ioctl(pHostData->hUSBHOSTGENERIC, &generic_iocb) == USBHOSTGENERIC_OK)
-				{
-					int midiParam = 0;
-					int i;
-					msg[0] = 1;//pHostData->uchChannel;
+				if (vos_dev_ioctl(hUSB, &generic_iocb) == USBHOSTGENERIC_OK)
+				{					
+					// prepare the message header
+					msg[0] = pHostData->uchMsg;
 					msg[1] = 0;
-					
-					vos_lock_mutex(&pHostData->mutex);
-					pHostData->enabled = 1;
-					vos_unlock_mutex(&pHostData->mutex);
+					midiParam = 0;
 					
 					// Turn on the LED for this port
 					setGpioA(pHostData->uchActivityLed, pHostData->uchActivityLed);
-					
+
+					// flag that the port is attached
+					VOS_ENTER_CRITICAL_SECTION;
+					pHostData->hUSBHOSTGENERIC = hUSB;
+					VOS_EXIT_CRITICAL_SECTION;
+										
 					// now we loop until the launchpad is detached
 					while(1)
 					{
 						// listen for data from launchpad
-						if(0 != vos_dev_read(pHostData->hUSBHOSTGENERIC, buf, 64, &num_bytes))
-							break;
+						uint16 result = vos_dev_read(hUSB, buf, 64, &num_bytes);
+						if(0 != result)
+							break; // break when the launchpad is detached
 							
-						// interpret MIDI messages into 4 byte messages to pass to Arduino
+						// convert the MIDI messages into 4 byte packets to be sent
+						// over SPI to the Arduino
 						for(i=0;i<num_bytes;++i)
 						{
-							if(buf[i]&0x80)
+							if(buf[i]&0x80)	// MIDI status
 							{
-								msg[1] = buf[i];
-								midiParam = 0;
+								msg[1] = buf[i];	// store MIDI status
+								midiParam = 0;		// get ready to read first MIDI param
 							}
 							else if(midiParam == 0)
 							{
-								msg[2] = buf[i];
-								midiParam = 1;
+								msg[2] = buf[i];	// read first MIDI param
+								midiParam = 1;		// prepare for the second
 							}
 							else
 							{
-								msg[3] = buf[i];
-								if(msg[1])
-									fifo_write(&stSPIWriteFIFO, *((uint32*)msg));
-								midiParam = 0;
+								msg[3] = buf[i];	// read second MIDI param
+								midiParam = 0;		// prepare to roll back to first
+								if(msg[1])			// if we have a status byte...
+								{
+									fifo_write(&stSPIWriteFIFO, msg); // queue to SPI
+								}
 							}
 						}
 					}					
-					vos_lock_mutex(&pHostData->mutex);
-					pHostData->enabled = 0;
-					vos_unlock_mutex(&pHostData->mutex);
 					
+					// flag that the port is no longer attached
+					VOS_ENTER_CRITICAL_SECTION;
+					pHostData->hUSBHOSTGENERIC = NULL;
+					VOS_EXIT_CRITICAL_SECTION;
+					
+					// turn off the activity LED
 					setGpioA(pHostData->uchActivityLed, 0);
 				}
-				vos_dev_close(pHostData->hUSBHOSTGENERIC);
-				pHostData->hUSBHOSTGENERIC = NULL;
+				
+				// close the function driver
+				vos_dev_close(hUSB);
 			}
 		}
 	}
 }	
 
-/*	
-void SPISlave()
-{
-	unsigned short numRead;
-	common_ioctl_cb_t spi_iocb;
-	unsigned short dataAvail = 0;
-	unsigned char testdata;
-
-	vos_wait_semaphore(&setupSem);
-
-	while(1)
-	{
-		// get bytes available...
-		spi_iocb.ioctl_code = VOS_IOCTL_COMMON_GET_RX_QUEUE_STATUS;
-		vos_dev_ioctl(hSPI_SLAVE_1, &spi_iocb);
-		dataAvail = spi_iocb.get.queue_stat; // How much data to read?
-
-		if (dataAvail)
-		{
-			if (dataAvail > (sizeof(buf) - pBuf))
-				dataAvail = (sizeof(buf) - pBuf);
-
-			vos_lock_mutex(&mBufAccess);
-			vos_dev_read(hSPI_SLAVE_1, &buf[pBuf], dataAvail, &numRead);
-			pBuf += numRead;
-			vos_unlock_mutex(&mBufAccess);
-			vos_signal_semaphore(&dataSem);
-		}
-	}
-}
-*/
-	
 ////////////////////////////////////////////////////////////////////
 //	
-// THREAD TO RUN THE SPI INTERFACE
+// RECEIVE DATA FROM SPI
 //
 ////////////////////////////////////////////////////////////////////
 void RunSPIReceive()
 {
 	unsigned short bytes_read;
-	uint32 msg;
+	uint8 msg[4];
 	
 	// wait for setup to complete
 	vos_wait_semaphore(&setupSem);
@@ -463,20 +440,21 @@ void RunSPIReceive()
 
 	while(1)
 	{
-		if(0==vos_dev_read(hSPISlave, (char*)&msg, 4, &bytes_read))		
+		// wait for a 4 byte message and place it in queue to USB 
+		if(0==vos_dev_read(hSPISlave, (char*)msg, 4, &bytes_read) && (4==bytes_read))
 			fifo_write(&stSPIReadFIFO, msg);
 	}
 }
 
 ////////////////////////////////////////////////////////////////////
 //	
-// THREAD TO RUN THE SPI INTERFACE
+// SEND DATA TO SPI
 //
 ////////////////////////////////////////////////////////////////////
 void RunSPISend()
 {
 	unsigned short bytes_written;
-	uint32 msg;
+	uint8 msg[4];
 	
 	// wait for setup to complete
 	vos_wait_semaphore(&setupSem);
@@ -484,40 +462,56 @@ void RunSPISend()
 
 	while(1)
 	{
-		// wait for there to be some data available to send
-		msg = fifo_read(&stSPIWriteFIFO);
-		vos_dev_write(hSPISlave, (char*)&msg, 4, &bytes_written);
+		// wait for a message to be available from USB
+		fifo_read(&stSPIWriteFIFO, msg);
+		
+		// pass it to SPI
+		vos_dev_write(hSPISlave, (char*)msg, 4, &bytes_written);		
+		setGpioA(LED_SIGNAL,0); 
+		setGpioA(LED_SIGNAL,LED_SIGNAL|LED_ACTIVITY); 		
+		
 	}
 }
 	
 ////////////////////////////////////////////////////////////////////
 //	
-// THREAD TO RUN THE SPI INTERFACE
+// SEND DATA TO USB
 //
 ////////////////////////////////////////////////////////////////////
-void RunWriteLaunchpad()
+void RunUSBSend()
 {
-	uint8 enabled;
-	uint32 msg;
+	unsigned char attached;
+	uint8 msg[4];
 	unsigned short bytes_written;
-	char *p;
-		
+	VOS_HANDLE hUSB;
+	
+	// wait for setup to complete
 	vos_wait_semaphore(&setupSem);
 	vos_signal_semaphore(&setupSem);
 
 	while(1)
 	{
-		msg = fifo_read(&stSPIReadFIFO);
-		p=(char*)&msg;
-		if(p[0]==1)
+		// wait for a message to be received from SPI
+		fifo_read(&stSPIReadFIFO, msg);
+		
+		// get the port driver handle
+		switch(msg[0]) 
 		{
-			vos_lock_mutex(&PortA.mutex);
-			enabled = PortA.enabled;
-			vos_unlock_mutex(&PortA.mutex);
-			if(enabled)
-			{
-				vos_dev_write(PortA.hUSBHOSTGENERIC, p+1, 3, &bytes_written);
-			}		
+			case MSG_PORTA:
+				VOS_ENTER_CRITICAL_SECTION;
+				hUSB = PortA.hUSBHOSTGENERIC;
+				VOS_EXIT_CRITICAL_SECTION;
+				break;
+			case MSG_PORTB:
+				VOS_ENTER_CRITICAL_SECTION;
+				hUSB = PortB.hUSBHOSTGENERIC;
+				VOS_EXIT_CRITICAL_SECTION;
+				break;
+			default:
+				hUSB = NULL;
+				break;
 		}		
+		if(hUSB) // will be NULL unless the device is attached
+			vos_dev_write(hUSB, &msg[1], 3, &bytes_written);
 	}
 }
