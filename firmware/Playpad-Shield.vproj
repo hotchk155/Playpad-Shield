@@ -62,7 +62,7 @@
 			<AdditionalOpts></AdditionalOpts>
 		</LinkerOptions>
 	</ReleaseMode>
-	<BuildMode>Release</BuildMode>
+	<BuildMode>Debug</BuildMode>
 	<VirtualFolderGroup>
 		<Name>FTDI Libraries</Name>
 		<ID>{00000000-0000-0000-0000-000000000001}</ID>
@@ -1086,7 +1086,7 @@
 	</OpenFilesList>
 	<BreakPointList>
 		<filename>Playpad.c</filename>
-		<lineNo>384</lineNo>
+		<lineNo>428</lineNo>
 		<isEnabled>true</isEnabled>
 	</BreakPointList>
 	<WatchVariableList>
